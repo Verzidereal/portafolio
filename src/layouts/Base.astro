@@ -1,4 +1,5 @@
 ---
+import "../styles/tailwind.css";
 const {
   title = "Verzide — Portafolio",
   description = "Experiencias web oscuras y elegantes. Full-Stack & Cybersecurity."
@@ -19,7 +20,6 @@ const {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href={Astro.resolve('../styles/tailwind.css')} />
   </head>
   <body class="bg-bg text-zinc-100 antialiased">
     <slot />
