@@ -1,0 +1,28 @@
+---
+const {
+  title = "Verzide — Portafolio",
+  description = "Experiencias web oscuras y elegantes. Full-Stack & Cybersecurity."
+} = Astro.props;
+---
+<html lang="es" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0a0b0f" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/assets/img/avatar.svg" />
+    <link rel="icon" href="/assets/img/avatar.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href={Astro.resolve('../styles/tailwind.css')} />
+  </head>
+  <body class="bg-bg text-zinc-100 antialiased">
+    <slot />
+    <script src="/assets/js/app.js" defer></script>
+  </body>
+</html>

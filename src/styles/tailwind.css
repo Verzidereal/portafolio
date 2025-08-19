@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Utilidades personalizadas */
+.grad-white { @apply bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent; }
+.grad-brand  { @apply bg-gradient-to-r from-indigo-400 to-rose-200 bg-clip-text text-transparent; }
+.chip { @apply rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-zinc-300; }
+.card { @apply rounded-2xl border border-white/10 bg-white/5 p-5 shadow-soft; }
+.card-title { @apply text-lg font-semibold; }
