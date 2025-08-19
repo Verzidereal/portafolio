@@ -2,6 +2,9 @@
 import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.tsx";
 import Hero from "../components/Hero.tsx";
+import Skills from "../components/Skills.tsx";
+import ContactForm from "../components/ContactForm.astro";
+import WhatsAppFab from "../components/WhatsAppFab.astro";
 
 const proyectos = [
   { t: "Landing oscura", d: "UI elegante con microinteracciones.", u: "#" },
@@ -10,19 +13,20 @@ const proyectos = [
 ];
 ---
 <Base title="Verzide — Portafolio">
-  <!-- Navbar responsive -->
   <Nav client:load />
 
   <main class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-    <!-- Hero responsive -->
     <section class="py-12 md:py-20">
       <Hero client:load />
     </section>
 
-    <!-- Proyectos -->
+    <section class="py-10 md:py-14" id="habilidades">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Habilidades</h2>
+      <Skills />
+    </section>
+
     <section id="proyectos" class="py-8 md:py-12">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {proyectos.map(p => (
           <article class="card hover:border-accent transition">
@@ -34,22 +38,19 @@ const proyectos = [
       </div>
     </section>
 
-    <!-- Sobre mí -->
-    <section id="sobre-mi" class="py-10 md:py-14">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Sobre mí</h2>
-      <p class="text-zinc-300 max-w-2xl">Soy Verzide. Construyo experiencias web rápidas con buen diseño y animaciones.</p>
-    </section>
-
-    <!-- Contacto -->
     <section id="contacto" class="py-10 md:py-14">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contacto</h2>
-      <a class="underline underline-offset-4 hover:text-accent transition" href="mailto:contacto@verzide.com">contacto@verzide.com</a>
+      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contáctame</h2>
+      <!-- Cambia mailto si quieres -->
+      <ContactForm mailto="contacto@verzide.com" />
     </section>
   </main>
 
   <footer class="mt-12 md:mt-16 border-t border-white/5">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 md:py-10 text-zinc-400">
-      © <span id="year"></span> Verzide · Hecho con cariño
+      © <span id="year"></span> Verzide · Todos los derechos reservados.
     </div>
   </footer>
+
+  <!-- WhatsApp flotante: cambia el phone a tu número real con código de país -->
+  <WhatsAppFab phone="522291311673" />
 </Base>
