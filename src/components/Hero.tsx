@@ -9,7 +9,7 @@ export default function Hero() {
       </p>
       <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
         <a href="#proyectos" className="px-5 py-3 rounded-xl bg-accent text-black font-medium text-center hover:opacity-90 transition">Ver proyectos</a>
-        <a href="#contacto" className="px-5 py-3 rounded-xl border border-white/10 text-center hover:border-white/20 transition">Contacto</a>
+        <a href="/assets/cv/Verzide-CV.pdf" download className="px-5 py-3 rounded-xl border border-white/10 text-center hover:border-white/20 transition">Descargar CV</a>
       </div>
     </>
   );
