@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import Nav from "../components/Nav.tsx";
 import Hero from "../components/Hero.tsx";
 
 const proyectos = [
@@ -9,25 +10,20 @@ const proyectos = [
 ];
 ---
 <Base title="Verzide — Portafolio">
-  <header class="sticky top-0 backdrop-blur bg-bg/70 border-b border-white/5">
-    <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3 group">
-        <img src="/assets/img/avatar.svg" alt="Logo" class="w-8 h-8 opacity-90 group-hover:opacity-100 transition" />
-        <span class="font-semibold tracking-wide">Verzide</span>
-      </a>
-      <nav class="flex gap-6 text-zinc-300">
-        <a class="hover:text-white transition" href="#proyectos">Proyectos</a>
-        <a class="hover:text-white transition" href="#sobre-mi">Sobre mí</a>
-        <a class="hover:text-white transition" href="#contacto">Contacto</a>
-      </nav>
-    </div>
-  </header>
+  <!-- Navbar responsive -->
+  <Nav client:load />
 
-  <main class="mx-auto max-w-6xl px-4">
-    <Hero client:load />
-    <section id="proyectos" class="py-8">
-      <h2 class="text-2xl font-semibold mb-6">Proyectos destacados</h2>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <main class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <!-- Hero responsive -->
+    <section class="py-12 md:py-20">
+      <Hero client:load />
+    </section>
+
+    <!-- Proyectos -->
+    <section id="proyectos" class="py-8 md:py-12">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {proyectos.map(p => (
           <article class="card hover:border-accent transition">
             <h3 class="card-title">{p.t}</h3>
@@ -38,19 +34,21 @@ const proyectos = [
       </div>
     </section>
 
-    <section id="sobre-mi" class="py-12">
-      <h2 class="text-2xl font-semibold mb-4">Sobre mí</h2>
+    <!-- Sobre mí -->
+    <section id="sobre-mi" class="py-10 md:py-14">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Sobre mí</h2>
       <p class="text-zinc-300 max-w-2xl">Soy Verzide. Construyo experiencias web rápidas con buen diseño y animaciones.</p>
     </section>
 
-    <section id="contacto" class="py-12">
-      <h2 class="text-2xl font-semibold mb-4">Contacto</h2>
+    <!-- Contacto -->
+    <section id="contacto" class="py-10 md:py-14">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contacto</h2>
       <a class="underline underline-offset-4 hover:text-accent transition" href="mailto:contacto@verzide.com">contacto@verzide.com</a>
     </section>
   </main>
 
-  <footer class="mt-16 border-t border-white/5">
-    <div class="mx-auto max-w-6xl px-4 py-10 text-zinc-400">
+  <footer class="mt-12 md:mt-16 border-t border-white/5">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 md:py-10 text-zinc-400">
       © <span id="year"></span> Verzide · Hecho con cariño
     </div>
   </footer>
