@@ -1,0 +1,36 @@
+---
+/** Si consigues un endpoint de Formspree, pásalo como prop: <ContactForm formspree="https://formspree.io/f/xxxx" /> */
+const { mailto = "contacto@verzide.com", formspree = "" } = Astro.props;
+const action = formspree || "#";
+---
+<form action={action} method="POST" class="grid gap-4 max-w-2xl"
+      on:submit={(e) => {
+        if (action === "#") {
+          e.preventDefault();
+          const f = e.currentTarget as HTMLFormElement;
+          const name = (f.querySelector('[name=name]') as HTMLInputElement).value;
+          const email = (f.querySelector('[name=email]') as HTMLInputElement).value;
+          const type = (f.querySelector('[name=type]') as HTMLSelectElement).value;
+          const msg  = (f.querySelector('[name=message]') as HTMLTextAreaElement).value;
+          const body = `Nombre: ${name}%0AEmail: ${email}%0ATipo: ${type}%0A%0A${msg}`;
+          window.location.href = `mailto:${mailto}?subject=Nuevo contacto desde el portafolio&body=${body}`;
+        }
+      }}>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <input name="name" required placeholder="Tu nombre" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+    <input name="email" type="email" required placeholder="Tu correo" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+  </div>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <input name="budget" placeholder="Presupuesto (opcional)" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+    <select name="type" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent">
+      <option value="Sitio web">Sitio web</option>
+      <option value="Tienda online">Tienda online</option>
+      <option value="UI/UX">UI/UX</option>
+      <option value="Otro">Otro</option>
+    </select>
+  </div>
+  <textarea name="message" rows="5" required placeholder="Cuéntame tu idea..." class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent"></textarea>
+  <button class="w-full sm:w-auto px-5 py-3 rounded-xl bg-accent text-black font-medium hover:opacity-90 transition">Enviar</button>
+  <!-- honeypot simple -->
+  <input type="text" name="_gotcha" class="hidden" tabIndex="-1" autoComplete="off" />
+</form>
