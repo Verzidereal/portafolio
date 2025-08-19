@@ -2,7 +2,7 @@ export default function Hero() {
   return (
     <>
       <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight">
-        Portafolio <span className="text-accent">oscuro</span> y profesional
+        Portafolio de trabajos realizados por <span className="text-accent"> Minquiz </span> 
       </h1>
       <p className="mt-3 md:mt-4 text-zinc-300 max-w-2xl">
         Diseño limpio, microinteracciones suaves y rendimiento.
