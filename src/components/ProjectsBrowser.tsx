@@ -2,22 +2,24 @@ import { useMemo, useState } from "react";
 import type { Project } from "../data/projects";
 import { projects as RAW } from "../data/projects";
 
+type SortKey = "year_desc" | "year_asc" | "title_asc" | "title_desc";
+
 type Filters = {
   stacks: Set<string>;
   hosts: Set<string>;
+  years: Set<number>;
   q: string;
+  sort: SortKey;
 };
 
-function intersect(a: Set<string>, b: string[] = []) {
-  if (a.size === 0) return true;
-  return b.some((x) => a.has(x));
+function intersect<T>(active: Set<T>, values: T[] = []) {
+  if (active.size === 0) return true;
+  return values.some((v) => active.has(v));
 }
 
 export default function ProjectsBrowser() {
-  // Normaliza y ordena por año desc
-  const projects = useMemo<Project[]>(() => {
-    return [...RAW].sort((a, b) => (b.year || 0) - (a.year || 0));
-  }, []);
+  // Normaliza lista base
+  const projects = useMemo<Project[]>(() => [...RAW], []);
 
   // Catálogos
   const allStacks = useMemo<string[]>(() => {
@@ -32,11 +34,19 @@ export default function ProjectsBrowser() {
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [projects]);
 
+  const allYears = useMemo<number[]>(() => {
+    const s = new Set<number>();
+    projects.forEach((p) => typeof p.year === "number" && s.add(p.year));
+    return Array.from(s).sort((a, b) => b - a); // más recientes primero
+  }, [projects]);
+
   // Estado de filtros
   const [filters, setFilters] = useState<Filters>({
     stacks: new Set<string>(),
     hosts: new Set<string>(),
+    years: new Set<number>(),
     q: "",
+    sort: "year_desc",
   });
 
   const toggleStack = (name: string) =>
@@ -53,44 +63,84 @@ export default function ProjectsBrowser() {
       return { ...f, hosts: next };
     });
 
-  const clearAll = () =>
-    setFilters({ stacks: new Set(), hosts: new Set(), q: "" });
+  const toggleYear = (y: number) =>
+    setFilters((f) => {
+      const next = new Set(f.years);
+      next.has(y) ? next.delete(y) : next.add(y);
+      return { ...f, years: next };
+    });
 
-  // Filtrado
-  const filtered = projects.filter((p) => {
-    const byStack = intersect(filters.stacks, p.stack);
-    const byHost =
-      filters.hosts.size === 0 || (p.hosting && filters.hosts.has(p.hosting));
-    const byQuery =
-      !filters.q ||
-      [p.title, p.description, ...(p.stack || []), p.hosting || ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(filters.q.toLowerCase());
-    return byStack && byHost && byQuery;
-  });
+  const clearAll = () =>
+    setFilters({ stacks: new Set(), hosts: new Set(), years: new Set(), q: "", sort: "year_desc" });
+
+  // Aplica filtros
+  const filtered = useMemo(() => {
+    return projects.filter((p) => {
+      const byStack = intersect(filters.stacks, p.stack);
+      const byHost =
+        filters.hosts.size === 0 || (p.hosting && filters.hosts.has(p.hosting));
+      const byYear =
+        filters.years.size === 0 || (typeof p.year === "number" && filters.years.has(p.year));
+      const hayQuery =
+        !filters.q ||
+        [p.title, p.description, ...(p.stack || []), p.hosting || "", String(p.year ?? "")]
+          .join(" ")
+          .toLowerCase()
+          .includes(filters.q.toLowerCase());
+      return byStack && byHost && byYear && hayQuery;
+    });
+  }, [projects, filters]);
+
+  // Ordena
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    switch (filters.sort) {
+      case "year_asc":
+        return list.sort((a, b) => (a.year ?? 0) - (b.year ?? 0));
+      case "title_asc":
+        return list.sort((a, b) => a.title.localeCompare(b.title));
+      case "title_desc":
+        return list.sort((a, b) => b.title.localeCompare(a.title));
+      case "year_desc":
+      default:
+        return list.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+    }
+  }, [filtered, filters.sort]);
 
   return (
     <section className="space-y-5">
       {/* Barra de filtros */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="flex flex-col gap-3">
-          {/* Búsqueda */}
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-4">
+          {/* Búsqueda + Orden */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
             <input
               value={filters.q}
               onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-              placeholder="Buscar por título, stack o hosting…"
+              placeholder="Buscar por título, stack, hosting o año…"
               className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-accent"
               aria-label="Buscar proyectos"
             />
-            <button
-              onClick={clearAll}
-              className="shrink-0 px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
-              title="Limpiar filtros"
-            >
-              Limpiar
-            </button>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-zinc-400">Ordenar:</label>
+              <select
+                value={filters.sort}
+                onChange={(e) => setFilters({ ...filters, sort: e.target.value as SortKey })}
+                className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent"
+              >
+                <option value="year_desc">Año (recientes primero)</option>
+                <option value="year_asc">Año (antiguos primero)</option>
+                <option value="title_asc">Título (A–Z)</option>
+                <option value="title_desc">Título (Z–A)</option>
+              </select>
+              <button
+                onClick={clearAll}
+                className="px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
+                title="Limpiar filtros"
+              >
+                Limpiar
+              </button>
+            </div>
           </div>
 
           {/* Stacks */}
@@ -134,12 +184,34 @@ export default function ProjectsBrowser() {
               </div>
             </div>
           )}
+
+          {/* Años */}
+          {allYears.length > 0 && (
+            <div>
+              <div className="text-sm text-zinc-400 mb-2">Año</div>
+              <div className="flex flex-wrap gap-2">
+                {allYears.map((y) => {
+                  const on = filters.years.has(y);
+                  return (
+                    <button
+                      key={y}
+                      onClick={() => toggleYear(y)}
+                      className={`chip chip--filter ${on ? "chip--on" : ""}`}
+                      aria-pressed={on}
+                    >
+                      {y}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filtered.map((p) => (
+        {sorted.map((p) => (
           <article key={p.title} className="card hover:border-accent transition flex flex-col">
             {p.cover && (
               <img
@@ -152,7 +224,9 @@ export default function ProjectsBrowser() {
 
             <header className="flex items-start justify-between gap-3">
               <h3 className="card-title">{p.title}</h3>
-              {p.year && <span className="text-xs text-zinc-400">{p.year}</span>}
+              {typeof p.year === "number" && (
+                <span className="text-xs text-zinc-400">{p.year}</span>
+              )}
             </header>
 
             <p className="mt-2 text-zinc-400">{p.description}</p>
@@ -191,7 +265,7 @@ export default function ProjectsBrowser() {
       </div>
 
       {/* Empty state */}
-      {filtered.length === 0 && (
+      {sorted.length === 0 && (
         <div className="text-zinc-400 text-sm">No hay proyectos que coincidan con los filtros.</div>
       )}
     </section>
