@@ -7,12 +7,36 @@ import ContactForm from "../components/ContactForm.astro";
 import WhatsAppFab from "../components/WhatsAppFab.astro";
 import ProjectsGrid from "../components/ProjectsGrid.astro";
 import ProjectsBrowser from "../components/ProjectsBrowser.tsx";
+import Testimonials from "../components/Testimonials.astro";
 
 const proyectos = [
   { t: "Landing oscura", d: "UI elegante con microinteracciones.", u: "#" },
   { t: "Dashboard", d: "Cards, tablas y filtros.", u: "#" },
   { t: "Animaciones", d: "Transiciones y scroll.", u: "#" },
 ];
+const testimonios = [
+  {
+    name: "Jultz",
+    role: "DTF • Teziutlán, Pue.",
+    quote:
+      "Nos ayudó a lanzar la tienda con un diseño limpio y rápido. Excelente comunicación y entrega puntual.",
+    // avatar: "/assets/testimonials/jultz.jpg",
+  },
+  {
+    name: "Green World",
+    role: "EdTech",
+    quote:
+      "Implementó la app/sitio con gran atención al detalle y rendimiento. Recomendado.",
+    // avatar: "/assets/testimonials/greenworld.jpg",
+  },
+  {
+    name: "Cliente anónimo",
+    role: "E-commerce",
+    quote:
+      "Gran trabajo en UX y microanimaciones que subieron la conversión de la landing.",
+  },
+];
+
 ---
 <Base title="Verzide — Portafolio">
   <Nav client:load />
@@ -31,6 +55,8 @@ const proyectos = [
   <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
   <ProjectsBrowser client:load />
 </section>
+
+<Testimonials items={testimonios} />
 
     <section id="contacto" class="py-10 md:py-14">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contáctame</h2>
