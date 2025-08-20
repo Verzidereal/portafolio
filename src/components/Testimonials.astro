@@ -1,0 +1,47 @@
+---
+type Item = {
+  name: string;
+  role?: string;
+  quote: string;
+  avatar?: string; // /assets/testimonials/nombre.jpg (opcional)
+};
+
+const { items = [] as Item[] } = Astro.props;
+---
+
+<section id="testimonios" class="py-10 md:py-14">
+  <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Testimonios</h2>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {items.map((t) => (
+      <figure class="card p-5">
+        <!-- estrellitas -->
+        <div class="mb-3 flex gap-1 text-accent">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <svg viewBox="0 0 20 20" class="h-4 w-4" aria-hidden="true">
+              <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.49L10 14.8 5.06 16.7 6 11.2l-4-3.9 5.53-.8L10 1.5z" />
+            </svg>
+          ))}
+        </div>
+
+        <blockquote class="text-zinc-200">“{t.quote}”</blockquote>
+
+        <figcaption class="mt-4 flex items-center gap-3 text-sm text-zinc-400">
+          {t.avatar && (
+            <img
+              src={t.avatar}
+              alt={t.name}
+              width="32" height="32"
+              loading="lazy"
+              class="h-8 w-8 rounded-full border border-white/10 object-cover"
+            />
+          )}
+          <div class="leading-tight">
+            <div class="text-white">{t.name}</div>
+            {t.role && <div>{t.role}</div>}
+          </div>
+        </figcaption>
+      </figure>
+    ))}
+  </div>
+</section>
