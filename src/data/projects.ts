@@ -25,14 +25,14 @@ export const projects: Project[] = [
     description: "E-commerce para impresión DTF por metro, con sección de tienda, carrito y FAQ.",
     year: 2025,
     stack: ["WordPress", "WooCommerce"], // si usaste otro, lo cambiamos
-    hosting: "—",                        // si recuerdas el proveedor, lo ponemos
+    hosting: "Hostinger Cloud Startup",                        // si recuerdas el proveedor, lo ponemos
     link: "https://jultz.com.mx",
     // repo: "—",
     // cover: "/assets/projects/jultz.jpg"
   },
   {
-    title: "Green World Group (App educativa)",
-    description: "App móvil de aprendizaje (Android/iOS). *Si te refieres a otra ‘Greenworld’, dime y la adaptamos*.",
+    title: "Green World (App educativa)",
+    description: "App móvil de aprendizaje (Android/iOS).",
     year: 2024,
     stack: ["Android", "iOS"], // si fue Flutter/React Native/otra, me dices y lo afino
     hosting: "Stores",
