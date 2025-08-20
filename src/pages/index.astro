@@ -5,6 +5,7 @@ import Hero from "../components/Hero.tsx";
 import Skills from "../components/Skills.tsx";
 import ContactForm from "../components/ContactForm.astro";
 import WhatsAppFab from "../components/WhatsAppFab.astro";
+import ProjectsGrid from "../components/ProjectsGrid.astro";
 
 const proyectos = [
   { t: "Landing oscura", d: "UI elegante con microinteracciones.", u: "#" },
@@ -26,17 +27,9 @@ const proyectos = [
     </section>
 
     <section id="proyectos" class="py-8 md:py-12">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {proyectos.map(p => (
-          <article class="card hover:border-accent transition">
-            <h3 class="card-title">{p.t}</h3>
-            <p class="mt-2 text-zinc-400">{p.d}</p>
-            <a class="mt-4 inline-block text-accent hover:brightness-110 transition" href={p.u}>Ver →</a>
-          </article>
-        ))}
-      </div>
-    </section>
+  <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
+  <ProjectsGrid />
+</section>
 
     <section id="contacto" class="py-10 md:py-14">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contáctame</h2>
