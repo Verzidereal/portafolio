@@ -18,7 +18,7 @@ function intersect<T>(active: Set<T>, values: T[] = []) {
 }
 
 export default function ProjectsBrowser() {
-  // Normaliza lista base
+  // Lista base
   const projects = useMemo<Project[]>(() => [...RAW], []);
 
   // Catálogos
@@ -37,7 +37,7 @@ export default function ProjectsBrowser() {
   const allYears = useMemo<number[]>(() => {
     const s = new Set<number>();
     projects.forEach((p) => typeof p.year === "number" && s.add(p.year));
-    return Array.from(s).sort((a, b) => b - a); // más recientes primero
+    return Array.from(s).sort((a, b) => b - a); // recientes primero
   }, [projects]);
 
   // Estado de filtros
@@ -73,7 +73,7 @@ export default function ProjectsBrowser() {
   const clearAll = () =>
     setFilters({ stacks: new Set(), hosts: new Set(), years: new Set(), q: "", sort: "year_desc" });
 
-  // Aplica filtros
+  // Filtrado
   const filtered = useMemo(() => {
     return projects.filter((p) => {
       const byStack = intersect(filters.stacks, p.stack);
@@ -81,17 +81,17 @@ export default function ProjectsBrowser() {
         filters.hosts.size === 0 || (p.hosting && filters.hosts.has(p.hosting));
       const byYear =
         filters.years.size === 0 || (typeof p.year === "number" && filters.years.has(p.year));
-      const hayQuery =
+      const byQuery =
         !filters.q ||
         [p.title, p.description, ...(p.stack || []), p.hosting || "", String(p.year ?? "")]
           .join(" ")
           .toLowerCase()
           .includes(filters.q.toLowerCase());
-      return byStack && byHost && byYear && hayQuery;
+      return byStack && byHost && byYear && byQuery;
     });
   }, [projects, filters]);
 
-  // Ordena
+  // Orden
   const sorted = useMemo(() => {
     const list = [...filtered];
     switch (filters.sort) {
@@ -110,10 +110,12 @@ export default function ProjectsBrowser() {
   return (
     <section className="space-y-5">
       {/* Barra de filtros */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
         <div className="flex flex-col gap-4">
-          {/* Búsqueda + Orden */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+
+          {/* Búsqueda + Orden (responsive) */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* búsqueda a ancho completo */}
             <input
               value={filters.q}
               onChange={(e) => setFilters({ ...filters, q: e.target.value })}
@@ -121,50 +123,42 @@ export default function ProjectsBrowser() {
               className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-accent"
               aria-label="Buscar proyectos"
             />
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-  {/* búsqueda siempre a ancho completo */}
-  <input
-    value={filters.q}
-    onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-    placeholder="Buscar por título, stack, hosting o año…"
-    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-accent"
-    aria-label="Buscar proyectos"
-  />
 
-  {/* contenedor del select + limpiar */}
-  <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
-    <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
-      {/* oculta la etiqueta en móvil para ahorrar espacio */}
-      <label className="hidden sm:block text-sm text-zinc-400 whitespace-nowrap">Ordenar:</label>
-      <select
-        value={filters.sort}
-        onChange={(e) => setFilters({ ...filters, sort: e.target.value as SortKey })}
-        className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent w-full sm:w-auto min-w-0"
-        aria-label="Ordenar proyectos"
-      >
-        <option value="year_desc">Año (recientes primero)</option>
-        <option value="year_asc">Año (antiguos primero)</option>
-        <option value="title_asc">Título (A–Z)</option>
-        <option value="title_desc">Título (Z–A)</option>
-      </select>
-    </div>
+            {/* select + limpiar */}
+            <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+                <label className="hidden sm:block text-sm text-zinc-400 whitespace-nowrap">
+                  Ordenar:
+                </label>
+                <select
+                  value={filters.sort}
+                  onChange={(e) =>
+                    setFilters({ ...filters, sort: e.target.value as SortKey })
+                  }
+                  className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent w-full sm:w-auto min-w-0"
+                  aria-label="Ordenar proyectos"
+                >
+                  <option value="year_desc">Año (recientes primero)</option>
+                  <option value="year_asc">Año (antiguos primero)</option>
+                  <option value="title_asc">Título (A–Z)</option>
+                  <option value="title_desc">Título (Z–A)</option>
+                </select>
+              </div>
 
-    {/* botón ocupa todo el ancho en móvil, se contrae en desktop */}
-    <button
-      onClick={clearAll}
-      className="w-full sm:w-auto shrink-0 px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
-      title="Limpiar filtros"
-    >
-      Limpiar
-    </button>
-  </div>
-</div>
-
+              <button
+                onClick={clearAll}
+                className="w-full sm:w-auto shrink-0 px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
+                title="Limpiar filtros"
+              >
+                Limpiar
+              </button>
+            </div>
+          </div>
 
           {/* Stacks */}
           <div>
             <div className="text-sm text-zinc-400 mb-2">Tecnologías</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
               {allStacks.map((s) => {
                 const on = filters.stacks.has(s);
                 return (
@@ -185,7 +179,7 @@ export default function ProjectsBrowser() {
           {allHosts.length > 0 && (
             <div>
               <div className="text-sm text-zinc-400 mb-2">Hosting</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
                 {allHosts.map((h) => {
                   const on = filters.hosts.has(h);
                   return (
@@ -207,7 +201,7 @@ export default function ProjectsBrowser() {
           {allYears.length > 0 && (
             <div>
               <div className="text-sm text-zinc-400 mb-2">Año</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
                 {allYears.map((y) => {
                   const on = filters.years.has(y);
                   return (
@@ -284,7 +278,9 @@ export default function ProjectsBrowser() {
 
       {/* Empty state */}
       {sorted.length === 0 && (
-        <div className="text-zinc-400 text-sm">No hay proyectos que coincidan con los filtros.</div>
+        <div className="text-zinc-400 text-sm">
+          No hay proyectos que coincidan con los filtros.
+        </div>
       )}
     </section>
   );
