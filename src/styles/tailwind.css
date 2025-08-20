@@ -8,3 +8,8 @@
 .chip { @apply rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-zinc-300; }
 .card { @apply rounded-2xl border border-white/10 bg-white/5 p-5 shadow-soft; }
 .card-title { @apply text-lg font-semibold; }
+
+/* Chips de filtro */
+.chip--on { @apply bg-accent/15 text-accent border-accent/30; }
+.chip--filter { @apply cursor-pointer select-none transition; }
+
