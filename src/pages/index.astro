@@ -7,7 +7,7 @@ import ContactForm from "../components/ContactForm.astro";
 import WhatsAppFab from "../components/WhatsAppFab.astro";
 import ProjectsGrid from "../components/ProjectsGrid.astro";
 import ProjectsBrowser from "../components/ProjectsBrowser.tsx";
-import TestimonialsCarousel from "../components/Testimonials.astro";
+import Testimonials from "../components/Testimonials.astro";
 
 const proyectos = [
   { t: "Landing oscura", d: "UI elegante con microinteracciones.", u: "#" },
@@ -56,7 +56,7 @@ const testimonios = [
   <ProjectsBrowser client:load />
 </section>
 
-<TestimonialsCarousel client:load items={testimonios} intervalMs={4500} pauseOnHover={true} />
+<Testimonials client:load items={testimonios} intervalMs={4500} pauseOnHover={true} />
 
     <section id="contacto" class="py-10 md:py-14">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contáctame</h2>
