@@ -6,6 +6,7 @@ import Skills from "../components/Skills.tsx";
 import ContactForm from "../components/ContactForm.astro";
 import WhatsAppFab from "../components/WhatsAppFab.astro";
 import ProjectsGrid from "../components/ProjectsGrid.astro";
+import ProjectsBrowser from "../components/ProjectsBrowser.tsx";
 
 const proyectos = [
   { t: "Landing oscura", d: "UI elegante con microinteracciones.", u: "#" },
@@ -26,9 +27,9 @@ const proyectos = [
       <Skills />
     </section>
 
-    <section id="proyectos" class="py-8 md:py-12">
+   <section id="proyectos" class="py-8 md:py-12">
   <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
-  <ProjectsGrid />
+  <ProjectsBrowser client:load />
 </section>
 
     <section id="contacto" class="py-10 md:py-14">
