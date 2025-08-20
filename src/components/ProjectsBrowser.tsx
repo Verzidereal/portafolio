@@ -112,10 +112,8 @@ export default function ProjectsBrowser() {
       {/* Barra de filtros */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
         <div className="flex flex-col gap-4">
-
           {/* Búsqueda + Orden (responsive) */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {/* búsqueda a ancho completo */}
             <input
               value={filters.q}
               onChange={(e) => setFilters({ ...filters, q: e.target.value })}
@@ -124,7 +122,6 @@ export default function ProjectsBrowser() {
               aria-label="Buscar proyectos"
             />
 
-            {/* select + limpiar */}
             <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
               <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
                 <label className="hidden sm:block text-sm text-zinc-400 whitespace-nowrap">
@@ -132,9 +129,7 @@ export default function ProjectsBrowser() {
                 </label>
                 <select
                   value={filters.sort}
-                  onChange={(e) =>
-                    setFilters({ ...filters, sort: e.target.value as SortKey })
-                  }
+                  onChange={(e) => setFilters({ ...filters, sort: e.target.value as SortKey })}
                   className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent w-full sm:w-auto min-w-0"
                   aria-label="Ordenar proyectos"
                 >
@@ -158,7 +153,7 @@ export default function ProjectsBrowser() {
           {/* Stacks */}
           <div>
             <div className="text-sm text-zinc-400 mb-2">Tecnologías</div>
-            <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
+            <div className="flex flex-wrap gap-2">
               {allStacks.map((s) => {
                 const on = filters.stacks.has(s);
                 return (
@@ -179,7 +174,7 @@ export default function ProjectsBrowser() {
           {allHosts.length > 0 && (
             <div>
               <div className="text-sm text-zinc-400 mb-2">Hosting</div>
-              <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 {allHosts.map((h) => {
                   const on = filters.hosts.has(h);
                   return (
@@ -201,7 +196,7 @@ export default function ProjectsBrowser() {
           {allYears.length > 0 && (
             <div>
               <div className="text-sm text-zinc-400 mb-2">Año</div>
-              <div className="flex flex-nowrap gap-2 overflow-x-auto no-scrollbar sm:flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 {allYears.map((y) => {
                   const on = filters.years.has(y);
                   return (
