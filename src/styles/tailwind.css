@@ -13,3 +13,7 @@
 .chip--on { @apply bg-accent/15 text-accent border-accent/30; }
 .chip--filter { @apply cursor-pointer select-none transition; }
 
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+
