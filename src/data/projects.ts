@@ -2,10 +2,10 @@ export type Project = {
   title: string;
   description: string;
   year?: number;
-  stack: string[];      // lenguajes / frameworks
-  hosting?: string;     // Cloudflare Pages, Vultr, etc.
+  stack: string[];      // lenguajes / frameworks / plataformas
+  hosting?: string;     // proveedor / plataforma
   link?: string;        // Demo / producción
-  repo?: string;        // GitHub
+  repo?: string;        // GitHub (si aplica)
   cover?: string;       // /assets/projects/archivo.jpg (opcional)
 };
 
@@ -17,25 +17,27 @@ export const projects: Project[] = [
     stack: ["Astro", "React", "Tailwind"],
     hosting: "Cloudflare Pages",
     link: "https://verzide.com",
-    repo: "https://github.com/Verzidereal/portafolio"
+    repo: "https://github.com/Verzidereal/portafolio",
+    // cover: "/assets/projects/portafolio.jpg"
   },
   {
-    title: "Landing de Agencia (oscura)",
-    description: "Landing minimalista con microinteracciones y formulario.",
-    year: 2024,
-    stack: ["HTML", "Tailwind", "JS"],
-    hosting: "Cloudflare Pages",
-    link: "#",
-    repo: "https://github.com/Verzidereal/landing-agencia"
+    title: "Jultz · Impresión DTF",
+    description: "E-commerce para impresión DTF por metro, con sección de tienda, carrito y FAQ.",
+    year: 2025,
+    stack: ["WordPress", "WooCommerce"], // si usaste otro, lo cambiamos
+    hosting: "—",                        // si recuerdas el proveedor, lo ponemos
+    link: "https://jultz.com.mx",
+    // repo: "—",
+    // cover: "/assets/projects/jultz.jpg"
   },
   {
-    title: "Dashboard Admin",
-    description: "Tableros, gráficas y filtros accesibles.",
+    title: "Green World Group (App educativa)",
+    description: "App móvil de aprendizaje (Android/iOS). *Si te refieres a otra ‘Greenworld’, dime y la adaptamos*.",
     year: 2024,
-    stack: ["Vite", "React", "Tailwind"],
-    hosting: "Vultr (Nginx)",
-    link: "#",
-    repo: "https://github.com/Verzidereal/dashboard-admin"
-  }
-  // ← Agrega aquí más proyectos reales (titulo, desc, stack, hosting, link, repo)
+    stack: ["Android", "iOS"], // si fue Flutter/React Native/otra, me dices y lo afino
+    hosting: "Stores",
+    link: "https://play.google.com/store/apps/details?id=com.moodle.greenworld",
+    // repo: "—",
+    // cover: "/assets/projects/greenworld.jpg"
+  },
 ];
