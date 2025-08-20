@@ -121,27 +121,45 @@ export default function ProjectsBrowser() {
               className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-accent"
               aria-label="Buscar proyectos"
             />
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-zinc-400">Ordenar:</label>
-              <select
-                value={filters.sort}
-                onChange={(e) => setFilters({ ...filters, sort: e.target.value as SortKey })}
-                className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent"
-              >
-                <option value="year_desc">Año (recientes primero)</option>
-                <option value="year_asc">Año (antiguos primero)</option>
-                <option value="title_asc">Título (A–Z)</option>
-                <option value="title_desc">Título (Z–A)</option>
-              </select>
-              <button
-                onClick={clearAll}
-                className="px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
-                title="Limpiar filtros"
-              >
-                Limpiar
-              </button>
-            </div>
-          </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+  {/* búsqueda siempre a ancho completo */}
+  <input
+    value={filters.q}
+    onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+    placeholder="Buscar por título, stack, hosting o año…"
+    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-accent"
+    aria-label="Buscar proyectos"
+  />
+
+  {/* contenedor del select + limpiar */}
+  <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+      {/* oculta la etiqueta en móvil para ahorrar espacio */}
+      <label className="hidden sm:block text-sm text-zinc-400 whitespace-nowrap">Ordenar:</label>
+      <select
+        value={filters.sort}
+        onChange={(e) => setFilters({ ...filters, sort: e.target.value as SortKey })}
+        className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-accent w-full sm:w-auto min-w-0"
+        aria-label="Ordenar proyectos"
+      >
+        <option value="year_desc">Año (recientes primero)</option>
+        <option value="year_asc">Año (antiguos primero)</option>
+        <option value="title_asc">Título (A–Z)</option>
+        <option value="title_desc">Título (Z–A)</option>
+      </select>
+    </div>
+
+    {/* botón ocupa todo el ancho en móvil, se contrae en desktop */}
+    <button
+      onClick={clearAll}
+      className="w-full sm:w-auto shrink-0 px-3 py-2 rounded-lg border border-white/10 hover:border-white/20"
+      title="Limpiar filtros"
+    >
+      Limpiar
+    </button>
+  </div>
+</div>
+
 
           {/* Stacks */}
           <div>
