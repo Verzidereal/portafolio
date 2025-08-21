@@ -245,7 +245,15 @@ export default function ProjectsBrowser() {
               {p.hosting && <span className="chip">Hosting: {p.hosting}</span>}
             </div>
 
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
+              {p.slug && (
+                <a
+                  href={`/proyectos/${p.slug}`}
+                  className="px-3 py-2 rounded-lg border border-white/10 text-sm hover:border-white/20 transition"
+                >
+                  Detalles
+                </a>
+              )}
               {p.link && (
                 <a
                   href={p.link}
