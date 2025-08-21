@@ -1,0 +1,124 @@
+---
+type Plan = {
+  id: string;
+  name: string;
+  price: string;      // “Desde $X MXN”
+  time?: string;      // “~1–2 semanas”
+  best?: boolean;     // resaltado
+  features: string[];
+};
+
+const { phone = "52XXXXXXXXXX", calendly = "" } = Astro.props;
+
+// Data editable (montos/tiempos de ejemplo)
+const plans: Plan[] = [
+  {
+    id: "landing",
+    name: "Landing page",
+    price: "Desde $3,500 MXN",
+    time: "~3–5 días",
+    features: [
+      "Sección Hero + Servicios + Contacto",
+      "Diseño responsive y accesible",
+      "Animaciones suaves",
+      "SEO básico (metadatos/OG)",
+      "Integración WhatsApp/Calendly",
+    ],
+  },
+  {
+    id: "portafolio",
+    name: "Portafolio profesional",
+    price: "Desde $5,000 MXN",
+    time: "~1 semana",
+    best: true,
+    features: [
+      "Astro + React + Tailwind",
+      "Grid de proyectos con filtros",
+      "Testimonios en carrusel",
+      "Optimización rendimiento (Lighthouse)",
+      "Deploy en Cloudflare Pages + dominio",
+    ],
+  },
+  {
+    id: "tienda",
+    name: "Tienda online",
+    price: "Desde $12,000 MXN",
+    time: "~2–3 semanas",
+    features: [
+      "Catálogo y carrito",
+      "Checkout (proveedor a definir)",
+      "Panel para productos/pedidos",
+      "SEO on-page",
+      "Analytics + eventos",
+    ],
+  },
+  {
+    id: "mantenimiento",
+    name: "Mantenimiento",
+    price: "$800 MXN / mes",
+    time: "Mensual",
+    features: [
+      "Backups y actualizaciones",
+      "Monitoreo básico",
+      "Pequeños cambios de contenido",
+      "Soporte por WhatsApp",
+    ],
+  },
+];
+
+function wa(plan: Plan) {
+  const msg = `Hola, me interesa el plan "${plan.name}" (${plan.price}). ¿Podemos hablar?`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+---
+<section id="servicios" class="py-10 md:py-14">
+  <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Servicios y precios</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    {plans.map((p) => (
+      <article
+        class={`card h-full flex flex-col ${p.best ? "ring-1 ring-accent/40" : ""}`}
+        aria-labelledby={`plan-${p.id}`}
+      >
+        {p.best && (
+          <div class="mb-2">
+            <span class="inline-flex items-center rounded-full bg-accent/15 text-accent border border-accent/30 px-2.5 py-1 text-xs font-medium">
+              Recomendado
+            </span>
+          </div>
+        )}
+
+        <h3 id={`plan-${p.id}`} class="text-lg font-semibold">{p.name}</h3>
+
+        <div class="mt-2">
+          <div class="text-2xl font-extrabold">{p.price}</div>
+          {p.time && <div class="text-zinc-400 text-sm mt-1">{p.time}</div>}
+        </div>
+
+        <ul class="mt-4 space-y-2 text-zinc-300">
+          {p.features.map((f) => (
+            <li class="flex gap-2">
+              <svg viewBox="0 0 24 24" class="h-5 w-5 text-accent" fill="none" stroke="currentColor">
+                <path stroke-width="2" d="M5 12l5 5L20 7"/>
+              </svg>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="mt-5 flex flex-col gap-2">
+          <a href={wa(p)} target="_blank" rel="noopener" class="btn text-center">
+            Empezar por WhatsApp
+          </a>
+          {calendly && (
+            <a href={calendly} target="_blank" rel="noopener" class="btn-outline text-center">
+              Agendar llamada
+            </a>
+          )}
+        </div>
+
+        <p class="mt-4 text-xs text-zinc-400">Precios orientativos. El total depende del alcance y contenidos.</p>
+      </article>
+    ))}
+  </div>
+</section>
