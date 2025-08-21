@@ -4,68 +4,19 @@ type Step = {
   title: string;
   description: string;
   deliverables?: string[];
-  time?: string; // ej. "~2–3 días"
+  time?: string;
   icon?: "search" | "doc" | "ui" | "code" | "rocket" | "support";
 };
 
 const { phone = "522291311673", calendly = "" } = Astro.props;
 
-// Puedes editar/ordenar estas fases a tu gusto:
 const steps: Step[] = [
-  {
-    id: "descubrimiento",
-    title: "1) Descubrimiento",
-    description:
-      "Entiendo objetivos, público, referencias y contenidos. Definimos alcance y éxito.",
-    deliverables: ["Llamada inicial", "Brief de proyecto", "Mapa de secciones"],
-    time: "~1 día",
-    icon: "search",
-  },
-  {
-    id: "propuesta",
-    title: "2) Propuesta / Alcance",
-    description:
-      "Te comparto la solución, tiempos y costo. Ajustamos según prioridades.",
-    deliverables: ["Propuesta PDF", "Cronograma estimado", "Alcance cerrado"],
-    time: "~1 día",
-    icon: "doc",
-  },
-  {
-    id: "diseno",
-    title: "3) Diseño UI",
-    description:
-      "Armamos estructura y componentes. Microinteracciones y look & feel.",
-    deliverables: ["Wireframe / mockup", "Paleta/tipografía", "Animaciones clave"],
-    time: "~2–4 días",
-    icon: "ui",
-  },
-  {
-    id: "desarrollo",
-    title: "4) Desarrollo",
-    description:
-      "Implementación con Astro + React + Tailwind. Rendimiento y accesibilidad.",
-    deliverables: ["Código en GitHub", "Integraciones (WhatsApp/Calendly)", "Pruebas"],
-    time: "~3–7 días",
-    icon: "code",
-  },
-  {
-    id: "lanzamiento",
-    title: "5) Lanzamiento",
-    description:
-      "Deploy en Cloudflare Pages y conexión de dominio. SEO básico y métricas.",
-    deliverables: ["Dominio y SSL", "Analytics", "Checklist SEO/OG"],
-    time: "~1 día",
-    icon: "rocket",
-  },
-  {
-    id: "soporte",
-    title: "6) Soporte",
-    description:
-      "Ajustes menores, monitoreo y mejoras continuas según plan de mantenimiento.",
-    deliverables: ["Actualizaciones", "Backups", "Soporte por WhatsApp"],
-    time: "Mensual",
-    icon: "support",
-  },
+  { id: "descubrimiento", title: "1) Descubrimiento", description: "Entiendo objetivos, público, referencias y contenidos. Definimos alcance y éxito.", deliverables: ["Llamada inicial", "Brief de proyecto", "Mapa de secciones"], time: "~1 día", icon: "search" },
+  { id: "propuesta", title: "2) Propuesta / Alcance", description: "Te comparto la solución, tiempos y costo. Ajustamos según prioridades.", deliverables: ["Propuesta PDF", "Cronograma estimado", "Alcance cerrado"], time: "~1 día", icon: "doc" },
+  { id: "diseno", title: "3) Diseño UI", description: "Armamos estructura y componentes. Microinteracciones y look & feel.", deliverables: ["Wireframe / mockup", "Paleta/tipografía", "Animaciones clave"], time: "~2–4 días", icon: "ui" },
+  { id: "desarrollo", title: "4) Desarrollo", description: "Implementación con Astro + React + Tailwind. Rendimiento y accesibilidad.", deliverables: ["Código en GitHub", "Integraciones (WhatsApp/Calendly)", "Pruebas"], time: "~3–7 días", icon: "code" },
+  { id: "lanzamiento", title: "5) Lanzamiento", description: "Deploy en Cloudflare Pages y conexión de dominio. SEO básico y métricas.", deliverables: ["Dominio y SSL", "Analytics", "Checklist SEO/OG"], time: "~1 día", icon: "rocket" },
+  { id: "soporte", title: "6) Soporte", description: "Ajustes menores, monitoreo y mejoras continuas según plan de mantenimiento.", deliverables: ["Actualizaciones", "Backups", "Soporte por WhatsApp"], time: "Mensual", icon: "support" },
 ];
 
 function wa() {
@@ -73,25 +24,15 @@ function wa() {
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
 
-/** OJO: JSX requiere camelCase en atributos SVG */
-function Icon({ name }: { name: Step["icon"] }) {
-  switch (name) {
-    case "search":
-      return <path strokeWidth="2" d="M21 21l-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />;
-    case "doc":
-      return <path strokeWidth="2" d="M14 2H6a2 2 0 0 0-2 2v16l4-4h8a2 2 0 0 0 2-2V6z" />;
-    case "ui":
-      return <path strokeWidth="2" d="M3 7h18M3 12h10M3 17h7" />;
-    case "code":
-      return <path strokeWidth="2" d="M8 16l-4-4 4-4M16 8l4 4-4 4" />;
-    case "rocket":
-      return <path strokeWidth="2" d="M5 13l4 4M19 5c-4 1-7 4-8 8l-4 4c4-1 7-4 8-8l4-4z" />;
-    case "support":
-      return <path strokeWidth="2" d="M6 18v-3a6 6 0 1 1 12 0v3M9 18v1a3 3 0 0 0 6 0v-1" />;
-    default:
-      return null;
-  }
-}
+/* Mapa de paths SVG (sin JSX) */
+const ICON_PATHS: Record<NonNullable<Step["icon"]>, string> = {
+  search: "M21 21l-4.3-4.3M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z",
+  doc: "M14 2H6a2 2 0 0 0-2 2v16l4-4h8a2 2 0 0 0 2-2V6z",
+  ui: "M3 7h18M3 12h10M3 17h7",
+  code: "M8 16l-4-4 4-4M16 8l4 4-4 4",
+  rocket: "M5 13l4 4M19 5c-4 1-7 4-8 8l-4 4c4-1 7-4 8-8l4-4z",
+  support: "M6 18v-3a6 6 0 1 1 12 0v3M9 18v1a3 3 0 0 0 6 0v-1",
+};
 ---
 
 <section id="proceso" class="py-10 md:py-14">
@@ -103,7 +44,7 @@ function Icon({ name }: { name: Step["icon"] }) {
         <!-- nodo -->
         <span class="absolute -start-3 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 border border-accent/40 text-accent">
           <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" aria-hidden="true">
-            <Icon name={s.icon} />
+            <path stroke-width="2" d={ICON_PATHS[s.icon ?? "search"]} />
           </svg>
         </span>
 
@@ -132,7 +73,6 @@ function Icon({ name }: { name: Step["icon"] }) {
     ))}
   </ol>
 
-  <!-- CTA final -->
   <div class="mt-6 flex flex-col sm:flex-row gap-3">
     <a href={wa()} target="_blank" rel="noopener noreferrer" class="btn text-center">Empezar por WhatsApp</a>
     {calendly && (
