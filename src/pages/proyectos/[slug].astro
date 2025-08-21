@@ -13,6 +13,9 @@ export function getStaticPaths() {
     }));
 }
 
+// (opcional) fuerza SSG si usas un adaptador server
+// export const prerender = true;
+
 const { project: p } = Astro.props as { project: Project };
 ---
 
@@ -34,8 +37,8 @@ const { project: p } = Astro.props as { project: Project };
     </div>
 
     <div class="mt-6 flex gap-3">
-      {p.link && <a class="btn" href={p.link} target="_blank" rel="noopener">Ver sitio</a>}
-      {p.repo && <a class="btn-outline" href={p.repo} target="_blank" rel="noopener">Código</a>}
+      {p.link && <a class="btn" href={p.link} target="_blank" rel="noopener noreferrer">Ver sitio</a>}
+      {p.repo && <a class="btn-outline" href={p.repo} target="_blank" rel="noopener noreferrer">Código</a>}
     </div>
   </main>
 </Base>
