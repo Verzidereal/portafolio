@@ -11,26 +11,9 @@ import Services from "../components/Services.astro";
 import Process from "../components/Process.astro";
 
 const testimonios = [
-  {
-    name: "Jultz",
-    role: "DTF • Teziutlán, Pue.",
-    quote:
-      "Nos ayudó a lanzar la tienda con un diseño limpio y rápido. Excelente comunicación y entrega puntual.",
-    // avatar: "/assets/testimonials/jultz.jpg",
-  },
-  {
-    name: "Green World",
-    role: "EdTech",
-    quote:
-      "Implementó la app/sitio con gran atención al detalle y rendimiento. Recomendado.",
-    // avatar: "/assets/testimonials/greenworld.jpg",
-  },
-  {
-    name: "Cliente anónimo",
-    role: "E-commerce",
-    quote:
-      "Gran trabajo en UX y microanimaciones que subieron la conversión de la landing.",
-  },
+  { name: "Jultz", role: "DTF • Teziutlán, Pue.", quote: "Nos ayudó a lanzar la tienda con un diseño limpio y rápido. Excelente comunicación y entrega puntual." },
+  { name: "Green World", role: "EdTech", quote: "Implementó la app/sitio con gran atención al detalle y rendimiento. Recomendado." },
+  { name: "Cliente anónimo", role: "E-commerce", quote: "Gran trabajo en UX y microanimaciones que subieron la conversión de la landing." },
 ];
 ---
 
@@ -42,17 +25,22 @@ const testimonios = [
       <Hero client:load />
     </section>
 
-    <!-- Servicios (puedes moverlo más arriba o dejarlo aquí) -->
-    <Services phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
+    <!-- Servicios -->
+    <section id="servicios" class="py-10 md:py-14">
+      <Services phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
+    </section>
 
-<Process phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
+    <!-- Proceso -->
+    <section id="proceso" class="py-10 md:py-14">
+      <Process phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
+    </section>
 
     <section class="py-10 md:py-14" id="habilidades">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Habilidades</h2>
       <Skills />
     </section>
 
-    <section id="proyectos" class="py-8 md:py-12">
+    <section id="proyectos" class="py-8 md:py-12 pb-24">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
       <ProjectsBrowser client:load />
     </section>
@@ -71,6 +59,6 @@ const testimonios = [
     </div>
   </footer>
 
-  <!-- WhatsApp flotante: cambia el phone a tu número real con código de país -->
+  <!-- WhatsApp flotante (código de país + número) -->
   <WhatsAppFab phone="522291311673" />
 </Base>
