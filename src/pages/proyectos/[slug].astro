@@ -1,12 +1,19 @@
 ---
 import Base from "../../layouts/Base.astro";
+import type { Project } from "../../data/projects";
 import { projects } from "../../data/projects";
 
-const { slug } = Astro.params;
-const p = projects.find((x) => x.slug === slug);
-if (!p) {
-  throw Astro.redirect("/#proyectos");
+/** Genera una página estática por cada slug */
+export function getStaticPaths() {
+  return projects
+    .filter((p) => !!p.slug)
+    .map((p) => ({
+      params: { slug: p.slug as string },
+      props: { project: p },
+    }));
 }
+
+const { project: p } = Astro.props as { project: Project };
 ---
 
 <Base title={`${p.title} — Proyecto`} description={p.description}>
