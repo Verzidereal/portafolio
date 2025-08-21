@@ -1,18 +1,20 @@
 export type Project = {
+  slug?: string;       // ← nuevo (opcional)
   title: string;
   description: string;
   year?: number;
-  stack: string[];      // lenguajes / frameworks / plataformas
-  hosting?: string;     // proveedor / plataforma
-  link?: string;        // Demo / producción
-  repo?: string;        // GitHub (si aplica)
-  cover?: string;       // /assets/projects/archivo.jpg (opcional)
+  stack: string[];
+  hosting?: string;
+  link?: string;
+  repo?: string;
+  cover?: string;
 };
 
 export const projects: Project[] = [
   {
+    slug: "portafolio-verzide",
     title: "Portafolio Verzide",
-    description: "Sitio personal con Astro + React + Tailwind. Animaciones suaves y SEO básico.",
+    description: "Sitio personal con Astro + React + Tailwind. Animaciones y SEO básico.",
     year: 2025,
     stack: ["Astro", "React", "Tailwind"],
     hosting: "Cloudflare Pages",
@@ -21,23 +23,23 @@ export const projects: Project[] = [
     // cover: "/assets/projects/portafolio.jpg"
   },
   {
+    slug: "jultz-dtf",
     title: "Jultz · Impresión DTF",
-    description: "E-commerce para impresión DTF por metro, con sección de tienda, carrito y FAQ.",
+    description: "E-commerce para impresión DTF por metro; tienda, carrito y FAQ.",
     year: 2025,
-    stack: ["WordPress", "WooCommerce"], // si usaste otro, lo cambiamos
-    hosting: "Hostinger Cloud Startup",                        // si recuerdas el proveedor, lo ponemos
+    stack: ["WordPress", "WooCommerce"],  // ajústalo si usaste otra cosa
+    hosting: "Hostinger Cloud Startup",
     link: "https://jultz.com.mx",
-    // repo: "—",
     // cover: "/assets/projects/jultz.jpg"
   },
   {
-    title: "Green World (App educativa)",
-    description: "App móvil de aprendizaje (Android/iOS).",
+    slug: "green-world-group",
+    title: "Green World (Shop)",
+    description: "App de productos naturales (Android/iOS).",
     year: 2024,
-    stack: ["Android", "iOS"], // si fue Flutter/React Native/otra, me dices y lo afino
+    stack: ["Android", "iOS"],  // o Flutter/React Native si aplica
     hosting: "Stores",
     link: "https://play.google.com/store/apps/details?id=com.moodle.greenworld",
-    // repo: "—",
     // cover: "/assets/projects/greenworld.jpg"
-  },
+  }
 ];
