@@ -1,5 +1,5 @@
 export type Project = {
-  slug?: string;       // ← nuevo (opcional)
+  slug?: string;
   title: string;
   description: string;
   year?: number;
@@ -27,7 +27,7 @@ export const projects: Project[] = [
     title: "Jultz · Impresión DTF",
     description: "E-commerce para impresión DTF por metro; tienda, carrito y FAQ.",
     year: 2025,
-    stack: ["WordPress", "WooCommerce"],  // ajústalo si usaste otra cosa
+    stack: ["WordPress", "WooCommerce"], // ajústalo si usaste otra cosa
     hosting: "Hostinger Cloud Startup",
     link: "https://jultz.com.mx",
     // cover: "/assets/projects/jultz.jpg"
@@ -37,7 +37,7 @@ export const projects: Project[] = [
     title: "Green World (Shop)",
     description: "App de productos naturales (Android/iOS).",
     year: 2024,
-    stack: ["Android", "iOS"],  // o Flutter/React Native si aplica
+    stack: ["Android", "iOS"], // o Flutter/React Native si aplica
     hosting: "Stores",
     link: "https://play.google.com/store/apps/details?id=com.moodle.greenworld",
     // cover: "/assets/projects/greenworld.jpg"
