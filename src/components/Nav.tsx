@@ -39,7 +39,7 @@ export default function Nav() {
       <div className={`md:hidden border-t border-white/5 ${open ? "block" : "hidden"}`}>
         <nav className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3 text-zinc-300">
           <a className="hover:text-white transition" href="#proyectos" onClick={() => setOpen(false)}>Proyectos</a>
-          <a className="hover:text-white transition" href="#sobre-mi" onClick={() => setOpen(false)}>Sobre mí</a>
+          <a className="hover:text-white transition" href="#About.astro" onClick={() => setOpen(false)}>Sobre mí</a>
           <a className="hover:text-white transition" href="#contacto" onClick={() => setOpen(false)}>Contacto</a>
         </nav>
       </div>
