@@ -8,7 +8,7 @@ type Skill = {
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
 };
 
-/* ====== ICONOS (simplificados y livianos) ====== */
+/* ====== ICONOS (livianos) ====== */
 const IconAstro: Skill["Icon"] = (props) => (
   <svg viewBox="0 0 256 256" fill="none" {...props}>
     <path d="M128 18l58 178H70L128 18z" fill="#FF5D01" />
@@ -75,7 +75,7 @@ function useInView<T extends HTMLElement>(threshold = 0.35) {
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true);
-          obs.unobserve(entry.target); // sólo una vez
+          obs.unobserve(entry.target);
         }
       },
       { threshold }
@@ -89,11 +89,9 @@ function useInView<T extends HTMLElement>(threshold = 0.35) {
 
 /* ====== Componente ====== */
 export default function Skills() {
-  // por si quieres computar o traducir algo después
   const items = useMemo(() => SKILLS, []);
-
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {items.map((s) => (
         <SkillCard key={s.name} skill={s} />
       ))}
@@ -107,27 +105,37 @@ function SkillCard({ skill: s }: { skill: Skill }) {
   return (
     <article
       ref={ref}
-      className="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col items-center"
+      className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col items-center"
       aria-label={`Habilidad ${s.name} ${s.level}%`}
     >
-      {/* Icono */}
-      <div className="h-14 w-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+      {/* Icono con animación (fade + translate + scale) */}
+      <div
+        className={[
+          "h-14 w-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center",
+          "transform-gpu transition-all duration-700",
+          inView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-90",
+        ].join(" ")}
+      >
         <s.Icon className="h-9 w-9" />
       </div>
 
       {/* Nombre */}
-      <div className="mt-3 text-base font-medium">{s.name}</div>
+      <div className="mt-3 text-base font-medium text-center">{s.name}</div>
 
-      {/* Barra vertical con etiqueta interna */}
-      <div className="mt-3 h-28 w-3 rounded-full bg-white/10 overflow-hidden relative">
-        {/* Relleno animado */}
+      {/* Barra horizontal con porcentaje dentro */}
+      <div
+        className="mt-3 w-full h-3 rounded-full bg-white/10 overflow-hidden relative"
+        role="progressbar"
+        aria-valuenow={s.level}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Nivel en ${s.name}`}
+      >
         <span
-          className="absolute bottom-0 left-0 w-full rounded-full transition-[height] duration-700 ease-out will-change-[height] flex items-start justify-center"
-          style={{ height: inView ? `${s.level}%` : "0%", background: s.color }}
-          aria-hidden="true"
+          className="h-full block rounded-full transition-[width] duration-700 ease-out will-change-[width] relative flex items-center justify-end pr-1"
+          style={{ width: inView ? `${s.level}%` : "0%", background: s.color }}
         >
-          {/* etiqueta dentro, pegada al borde superior del relleno */}
-          <span className="mt-1 text-[10px] leading-none font-semibold text-white drop-shadow">
+          <span className="text-[10px] leading-none font-semibold text-white drop-shadow">
             {inView ? `${s.level}%` : ""}
           </span>
         </span>
