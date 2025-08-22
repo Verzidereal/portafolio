@@ -4,19 +4,17 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 type Skill = {
   name: string;
   level: number; // 0–100
-  color: string; // color del relleno de la barra
+  color: string; // color de la barra
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
 };
 
-/* ====== ICONOS (livianos) ====== */
+/* ====== ICONOS ====== */
 const IconAstro: Skill["Icon"] = (props) => (
   <svg viewBox="0 0 256 256" fill="none" {...props}>
     <path d="M128 18l58 178H70L128 18z" fill="#FF5D01" />
     <path
       d="M178 196c0 22-22 40-50 40s-50-18-50-40"
-      stroke="#fff"
-      strokeWidth={16}
-      strokeLinecap="round"
+      stroke="#fff" strokeWidth={16} strokeLinecap="round"
     />
   </svg>
 );
@@ -63,7 +61,7 @@ const SKILLS: Skill[] = [
   { name: "TypeScript",   level: 70, color: "#3178C6", Icon: IconTS },
 ];
 
-/* ====== Hook: in-view (dispara una vez) ====== */
+/* Hook: in-view (solo para animar la barra, los íconos quedan estáticos) */
 function useInView<T extends HTMLElement>(threshold = 0.35) {
   const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
@@ -87,7 +85,6 @@ function useInView<T extends HTMLElement>(threshold = 0.35) {
   return { ref, inView };
 }
 
-/* ====== Componente ====== */
 export default function Skills() {
   const items = useMemo(() => SKILLS, []);
   return (
@@ -108,14 +105,8 @@ function SkillCard({ skill: s }: { skill: Skill }) {
       className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col items-center"
       aria-label={`Habilidad ${s.name} ${s.level}%`}
     >
-      {/* Icono con animación (fade + translate + scale) */}
-      <div
-        className={[
-          "h-14 w-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center",
-          "transform-gpu transition-all duration-700",
-          inView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-90",
-        ].join(" ")}
-      >
+      {/* Ícono estático */}
+      <div className="h-14 w-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
         <s.Icon className="h-9 w-9" />
       </div>
 
