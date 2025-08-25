@@ -1,4 +1,4 @@
-# 🌐 Verzide Portafolio
+# 🌐 Verzide Portfolio
 
 Welcome to my portfolio — a showcase of my journey in technology, development, and cybersecurity.  
 I am **Verzide**, a passionate engineer committed to creating impactful digital solutions while ensuring performance, usability, and security.  
