@@ -1,15 +1,15 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
+import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
-//import image from '@astrojs/image';
 
+// https://astro.build/config
 export default defineConfig({
-  site: 'https://verzide.com', // 👈 importante para sitemap y SEO
+  site: 'https://verzide.com',
   integrations: [
     react(),
     tailwind(),
     sitemap(),
-    image(),
   ],
   vite: {
     server: { port: 4321 },
