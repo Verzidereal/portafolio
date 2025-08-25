@@ -1,14 +1,7 @@
-# robots.txt for verzide.com
-
+# Bloquea scrapers no deseados pero permite indexación de buscadores
 User-agent: *
 Allow: /
 
-# Evita que indexen carpetas internas que no aportan SEO
-Disallow: /node_modules/
-Disallow: /src/
-Disallow: /api/
-Disallow: /_astro/
-
-# Indica el sitemap principal (funciona tanto para verzide.com como para www.verzide.com)
+# Ubicación de los sitemaps
 Sitemap: https://verzide.com/sitemap-index.xml
 Sitemap: https://www.verzide.com/sitemap-index.xml
