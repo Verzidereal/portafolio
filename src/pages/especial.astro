@@ -1,7 +1,7 @@
 ---
 import FireworksBG from "../components/Fireworks";
 const mensaje = "Te quiero mucho";
-const letras = [...mensaje]; // separa en letras (incluye espacios)
+const letras = [...mensaje];
 ---
 
 <html lang="es">
@@ -11,26 +11,42 @@ const letras = [...mensaje]; // separa en letras (incluye espacios)
     <meta name="robots" content="noindex, nofollow" />
 
     <style is:inline>
-      /* Animación de aparición con rebote suave */
+      /* 1) Aparición inicial */
       @keyframes pop-in {
         0% { opacity: 0; transform: translateY(14px) scale(.95); filter: blur(4px); }
         60% { opacity: 1; transform: translateY(0) scale(1.04); filter: blur(0); }
         100% { opacity: 1; transform: translateY(0) scale(1); }
       }
+
+      /* 2) Balanzo suave infinito por letra */
+      @keyframes wave {
+        0%, 100% { transform: translateY(0) }
+        25% { transform: translateY(-6px) }
+        50% { transform: translateY(0) }
+        75% { transform: translateY(6px) }
+      }
+
       .letra {
         display: inline-block;
-        animation: pop-in 600ms both;
+        /* Encadenamos 2 animaciones:
+           - pop-in una vez
+           - wave infinito con retraso escalonado
+        */
+        animation:
+          pop-in 600ms both,
+          wave 2400ms ease-in-out infinite;
+        /* Delays independientes (uno para cada animación) */
+        animation-delay: var(--pop, 0ms), var(--stagger, 0ms);
         will-change: transform, opacity, filter;
       }
-      /* Respeta accesibilidad: si el usuario prefiere menos movimiento, quita animación */
+
+      /* Respeta accesibilidad: menos movimiento si el usuario lo prefiere */
       @media (prefers-reduced-motion: reduce) {
         .letra { animation: none !important; }
       }
 
-      /* (Opcional) brillo suave al final */
-      .glow {
-        text-shadow: 0 0 8px rgba(255,255,255,.25);
-      }
+      /* Brillito sutil */
+      .glow { text-shadow: 0 0 8px rgba(255,255,255,.25); }
     </style>
   </head>
 
@@ -47,30 +63,14 @@ const letras = [...mensaje]; // separa en letras (incluye espacios)
             letras.map((c, i) => (
               <span
                 class="letra"
-                style={`animation-delay:${i * 60}ms`}
+                /* --pop: delay del pop-in; --stagger: delay del wave infinito */
+                style={`--pop:${i * 60}ms; --stagger:${i * 80}ms`}
               >
                 {c === ' ' ? '\u00A0' : c}
               </span>
             ))
           }
         </h1>
-
-        <!-- (Opcional) Botón para re-lanzar la animación -->
-        <button
-          class="mt-4 text-sm opacity-80 hover:opacity-100 underline"
-          onclick={`
-            const letras = document.querySelectorAll('.letra');
-            letras.forEach((el, idx) => {
-              el.style.animation = 'none';
-              // fuerza reflow
-              void el.offsetWidth;
-              el.style.animation = 'pop-in 600ms both';
-              el.style.animationDelay = (idx * 60) + 'ms';
-            });
-          `}
-        >
-          Ver animación otra vez
-        </button>
       </section>
     </main>
   </body>
