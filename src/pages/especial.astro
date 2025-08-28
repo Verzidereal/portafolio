@@ -1,15 +1,39 @@
 ---
 import FireworksBG from "../components/Fireworks";
 const mensaje = "Te quiero mucho";
+const letras = [...mensaje]; // separa en letras (incluye espacios)
 ---
 
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <title>Especial — Verzide</title>
-    <!-- Quita esta meta si quieres que Google la indexe -->
     <meta name="robots" content="noindex, nofollow" />
+
+    <style is:inline>
+      /* Animación de aparición con rebote suave */
+      @keyframes pop-in {
+        0% { opacity: 0; transform: translateY(14px) scale(.95); filter: blur(4px); }
+        60% { opacity: 1; transform: translateY(0) scale(1.04); filter: blur(0); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .letra {
+        display: inline-block;
+        animation: pop-in 600ms both;
+        will-change: transform, opacity, filter;
+      }
+      /* Respeta accesibilidad: si el usuario prefiere menos movimiento, quita animación */
+      @media (prefers-reduced-motion: reduce) {
+        .letra { animation: none !important; }
+      }
+
+      /* (Opcional) brillo suave al final */
+      .glow {
+        text-shadow: 0 0 8px rgba(255,255,255,.25);
+      }
+    </style>
   </head>
+
   <body class="min-h-screen bg-black text-white">
     <FireworksBG client:load />
     <main class="min-h-screen grid place-items-center px-6 text-center">
@@ -17,9 +41,36 @@ const mensaje = "Te quiero mucho";
         <p class="text-xs uppercase tracking-widest opacity-70">
           Para alguien especial ✨
         </p>
-        <h1 class="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight">
-          {mensaje}
+
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight glow">
+          {
+            letras.map((c, i) => (
+              <span
+                class="letra"
+                style={`animation-delay:${i * 60}ms`}
+              >
+                {c === ' ' ? '\u00A0' : c}
+              </span>
+            ))
+          }
         </h1>
+
+        <!-- (Opcional) Botón para re-lanzar la animación -->
+        <button
+          class="mt-4 text-sm opacity-80 hover:opacity-100 underline"
+          onclick={`
+            const letras = document.querySelectorAll('.letra');
+            letras.forEach((el, idx) => {
+              el.style.animation = 'none';
+              // fuerza reflow
+              void el.offsetWidth;
+              el.style.animation = 'pop-in 600ms both';
+              el.style.animationDelay = (idx * 60) + 'ms';
+            });
+          `}
+        >
+          Ver animación otra vez
+        </button>
       </section>
     </main>
   </body>
