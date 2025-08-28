@@ -21,42 +21,46 @@ const testimonios = [
   <Nav client:load />
 
   <main class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-    <section class="py-12 md:py-20">
+    <!-- Hero más compacto -->
+    <section class="pt-10 pb-12 md:pt-12 md:pb-14">
       <Hero client:load />
     </section>
 
     <!-- Servicios -->
-    <section id="servicios" class="py-10 md:py-14">
+    <section id="servicios" class="py-8 md:py-12 scroll-mt-28">
       <Services phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
     </section>
 
     <!-- Proceso -->
-    <section id="proceso" class="py-10 md:py-14">
+    <section id="proceso" class="py-8 md:py-12 scroll-mt-28">
       <Process phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
     </section>
 
-    <section id="skills" class="mt-10">
-  <h2 class="text-2xl font-semibold mb-6">Habilidades</h2>
-  <!-- Elige UNA de estas -->
-  <Skills client:visible />  <!-- hidrata cuando entra al viewport (recomendado) -->
-  <!-- o -->
-  <!-- <Skills client:load />   hidrata al cargar la página -->
-</section>
+    <!-- Habilidades -->
+    <section id="skills" class="py-8 md:py-12 scroll-mt-28">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-5">Habilidades</h2>
+      <Skills client:visible />
+    </section>
 
-    <section id="proyectos" class="py-8 md:py-12 pb-24">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
+    <!-- Proyectos -->
+    <section id="proyectos" class="py-8 md:py-12 scroll-mt-28">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-5">Proyectos destacados</h2>
       <ProjectsBrowser client:load />
     </section>
 
-    <TestimonialsCarousel client:load items={testimonios} intervalMs={4500} pauseOnHover={true} />
+    <!-- Testimonios (envuelto para controlar el espacio) -->
+    <section id="testimonios" class="py-8 md:py-12 scroll-mt-28">
+      <TestimonialsCarousel client:load items={testimonios} intervalMs={4500} pauseOnHover={true} />
+    </section>
 
-    <section id="contacto" class="py-10 md:py-14">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4">Contáctame</h2>
+    <!-- Contacto -->
+    <section id="contacto" class="py-10 md:py-14 scroll-mt-28">
+      <h2 class="text-xl sm:text-2xl font-semibold mb-5">Contáctame</h2>
       <ContactForm mailto="contacto@verzide.com" />
     </section>
   </main>
 
-  <footer class="mt-12 md:mt-16 border-t border-white/5">
+  <footer class="mt-10 md:mt-12 border-t border-white/5">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 md:py-10 text-zinc-400">
       © <span id="year"></span> Verzide · Todos los derechos reservados.
     </div>
