@@ -35,10 +35,13 @@ const testimonios = [
       <Process phone="522291311673" calendly="https://calendly.com/TU_USUARIO/30min" />
     </section>
 
-    <section class="py-10 md:py-14" id="habilidades">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Habilidades</h2>
-      <Skills />
-    </section>
+    <section id="skills" class="mt-10">
+  <h2 class="text-2xl font-semibold mb-6">Habilidades</h2>
+  <!-- Elige UNA de estas -->
+  <Skills client:visible />  <!-- hidrata cuando entra al viewport (recomendado) -->
+  <!-- o -->
+  <!-- <Skills client:load />   hidrata al cargar la página -->
+</section>
 
     <section id="proyectos" class="py-8 md:py-12 pb-24">
       <h2 class="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Proyectos destacados</h2>
