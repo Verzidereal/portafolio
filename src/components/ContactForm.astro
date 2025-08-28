@@ -1,36 +1,90 @@
 ---
-/** Si consigues un endpoint de Formspree, pásalo como prop: <ContactForm formspree="https://formspree.io/f/xxxx" /> */
+/** Si consigues un endpoint de Formspree, pásalo como prop:
+ *  <ContactForm formspree="https://formspree.io/f/xxxx" />
+ */
 const { mailto = "contacto@verzide.com", formspree = "" } = Astro.props;
 const action = formspree || "#";
 ---
-<form action={action} method="POST" class="grid gap-4 max-w-2xl"
-      on:submit={(e) => {
-        if (action === "#") {
-          e.preventDefault();
-          const f = e.currentTarget as HTMLFormElement;
-          const name = (f.querySelector('[name=name]') as HTMLInputElement).value;
-          const email = (f.querySelector('[name=email]') as HTMLInputElement).value;
-          const type = (f.querySelector('[name=type]') as HTMLSelectElement).value;
-          const msg  = (f.querySelector('[name=message]') as HTMLTextAreaElement).value;
-          const body = `Nombre: ${name}%0AEmail: ${email}%0ATipo: ${type}%0A%0A${msg}`;
-          window.location.href = `mailto:${mailto}?subject=Nuevo contacto desde el portafolio&body=${body}`;
-        }
-      }}>
-  <div class="grid sm:grid-cols-2 gap-4">
-    <input name="name" required placeholder="Tu nombre" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
-    <input name="email" type="email" required placeholder="Tu correo" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
-  </div>
-  <div class="grid sm:grid-cols-2 gap-4">
-    <input name="budget" placeholder="Presupuesto (opcional)" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
-    <select name="type" class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent">
-      <option value="Sitio web">Sitio web</option>
-      <option value="Tienda online">Tienda online</option>
-      <option value="UI/UX">UI/UX</option>
-      <option value="Otro">Otro</option>
-    </select>
-  </div>
-  <textarea name="message" rows="5" required placeholder="Cuéntame tu idea..." class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent"></textarea>
-  <button class="w-full sm:w-auto px-5 py-3 rounded-xl bg-accent text-black font-medium hover:opacity-90 transition">Enviar</button>
-  <!-- honeypot simple -->
-  <input type="text" name="_gotcha" class="hidden" tabIndex="-1" autoComplete="off" />
-</form>
+
+<div class="grid gap-8 md:grid-cols-2 items-start">
+  <!-- Columna: Formulario -->
+  <form action={action} method="POST" class="grid gap-4 max-w-2xl"
+        on:submit={(e) => {
+          if (action === "#") {
+            e.preventDefault();
+            const f = e.currentTarget as HTMLFormElement;
+            const name    = (f.querySelector('[name=name]') as HTMLInputElement).value;
+            const email   = (f.querySelector('[name=email]') as HTMLInputElement).value;
+            const type    = (f.querySelector('[name=type]') as HTMLSelectElement).value;
+            const budget  = ((f.querySelector('[name=budget]') as HTMLInputElement)?.value || 'No especificado');
+            const msg     = (f.querySelector('[name=message]') as HTMLTextAreaElement).value;
+
+            const body = `Nombre: ${name}\nEmail: ${email}\nTipo: ${type}\nPresupuesto: ${budget}\n\n${msg}`;
+            const subject = 'Nuevo contacto desde el portafolio';
+            window.location.href =
+              `mailto:${mailto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          }
+        }}>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <input name="name" required placeholder="Tu nombre"
+             class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+      <input name="email" type="email" required placeholder="Tu correo"
+             class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <input name="budget" placeholder="Presupuesto (opcional)"
+             class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent" />
+      <select name="type"
+              class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent">
+        <option value="Sitio web">Sitio web</option>
+        <option value="Tienda online">Tienda online</option>
+        <option value="UI/UX">UI/UX</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+
+    <textarea name="message" rows="5" required placeholder="Cuéntame tu idea..."
+              class="rounded-xl bg-white/5 border border-white/10 px-4 py-3 outline-none focus:border-accent"></textarea>
+
+    <button class="w-full sm:w-auto px-5 py-3 rounded-xl bg-accent text-black font-medium hover:opacity-90 transition">
+      Enviar
+    </button>
+
+    <!-- honeypot simple -->
+    <input type="text" name="_gotcha" class="hidden" tabIndex="-1" autoComplete="off" />
+  </form>
+
+  <!-- Columna: Logo (se muestra arriba en móvil) -->
+  <aside class="order-first md:order-none">
+    <div class="rounded-2xl bg-white/5 border border-white/10 p-6">
+      <!-- Usa el color que prefieras para el acento del logo -->
+      <div class="text-[#7C3AED]"> <!-- cambia por text-accent si lo tienes en Tailwind -->
+        <!-- LOGO: Huella + V (negativa) — 1 color con currentColor -->
+        <svg viewBox="0 0 220 160" role="img" aria-label="Logo Verzide — Huella con V" class="w-full max-w-[460px] mx-auto">
+          <defs>
+            <g id="toe"><path d="M0,-32 C -8,-18 -6,-5 0,10 C 6,-5 8,-18 0,-32 Z"/></g>
+            <g id="print">
+              <use href="#toe" transform="translate(-22,-6) rotate(-18)"/>
+              <use href="#toe" transform="translate(0,-10)"/>
+              <use href="#toe" transform="translate(22,-6) rotate(18)"/>
+              <ellipse cx="0" cy="18" rx="16" ry="10.5" />
+            </g>
+            <path id="vshape" d="M-28,-22 -6,44 6,44 28,-22 17,-22 0,22 -17,-22 Z"/>
+            <mask id="m">
+              <rect x="0" y="0" width="220" height="160" fill="#000"/>
+              <g transform="translate(110,78) scale(1.05)" fill="#fff"><use href="#print"/></g>
+              <g transform="translate(110,84) scale(.95)" fill="#000"><use href="#vshape"/></g>
+            </mask>
+          </defs>
+          <!-- fondo del badge (oscuro) -->
+          <rect x="12" y="12" width="196" height="136" rx="18" fill="#0B1220"/>
+          <!-- huella con V negativa pintada con currentColor -->
+          <g mask="url(#m)">
+            <rect x="12" y="12" width="196" height="136" rx="18" fill="currentColor"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </aside>
+</div>
