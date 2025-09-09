@@ -264,8 +264,6 @@ export default function ProjectsBrowser() {
                   Ver sitio
                 </a>
               )}
-              {p.repo && (
-              )}
             </div>
           </article>
         ))}
