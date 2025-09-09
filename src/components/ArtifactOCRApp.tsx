@@ -1,371 +1,419 @@
 import React, { useMemo, useState } from "react";
+import Tesseract from "tesseract.js";
 
 /**
- * Solo Leveling — Recomendador con OCR (8 piezas + Builds + Escalado por personaje)
+ * Solo Leveling — Evaluador de Artefactos con OCR (cliente puro)
  *
- * • Basado en tus capturas: soporta efectos como Ataque/Defensa/PS adicionales, (%)
- *   Aumento de daño, Índice de golpe crítico, Reducción de daño, Penetración de defensa,
- *   PM adicionales, Reducción de consumo de PM, Aumento de índice de recuperación de PM (%),
- *   y Daño elemental (agua/fuego/luz/oscuridad/viento).
- * • Selecciona Personaje, Elemento, Rol, Escenario y Tipo de Escalado del daño (ATK / DEF / PS).
- * • Sube las 8 piezas: yelmo, armadura, guantes, botas, collar, pulsera, anillo, pendientes.
- * • OCR (eng+spa) por pieza, edición manual, puntuación por pieza y del conjunto (0–100, S/A/B/C/D).
- * • Recomendaciones por slot y pesos generados por el build + escalado.
+ * Qué hace:
+ * - Permite subir una imagen (screenshot/foto) del artefacto
+ * - Extrae texto con OCR (Tesseract.js, eng+spa)
+ * - Parsea estadísticas (ATK/ATQ, HP/Vida, DEF/Defensa, CRIT Rate/Prob. Crítica, CRIT DMG/Daño Crítico, Velocidad, Penetración, Celeridad)
+ * - Permite editar manualmente lo detectado (porque el OCR nunca es perfecto)
+ * - Evalúa el artefacto con perfiles (DPS / Tanque / Soporte / Personalizado) basados en pesos
+ * - Muestra una puntuación 0–100 y una calificación (S/A/B/C/D), más sugerencias
+ *
+ * Notas:
+ * - Totalmente cliente: no manda imágenes a servidores
+ * - El OCR depende de la calidad / recorte de la imagen. Recomiendo subir un recorte del panel del ítem con buen contraste.
+ * - Los benchmarks y pesos son genéricos; ajusta según tu meta/build/personaje.
  */
 
-// ===================== Tipos y constantes =====================
-export type SlotName =
-  | "Yelmo"
-  | "Armadura"
-  | "Guantes"
-  | "Botas"
-  | "Collar"
-  | "Pulsera"
-  | "Anillo"
-  | "Pendientes";
+// ====== Configuración base ======
+const STAT_ALIASES: Record<string, RegExp[]> = {
+  atkPct: [/\bATK\s*%\b/i, /\bATQ\s*%\b/i, /Ataque\s*%/i],
+  atkFlat: [/\bATK\s*[+]?\b/i, /\bATQ\s*[+]?\b/i, /Ataque\s*[+]?/i],
+  hpPct: [/\bHP\s*%\b/i, /Vida\s*%/i],
+  hpFlat: [/\bHP\s*[+]?\b/i, /Vida\s*[+]?/i],
+  defPct: [/\bDEF\s*%\b/i, /Defensa\s*%/i],
+  defFlat: [/\bDEF\s*[+]?\b/i, /Defensa\s*[+]?/i],
+  critRate: [/CRIT\s*Rate/i, /Prob\.?\s*Cr[ií]tica/i, /Crit\s*Rate/i],
+  critDmg: [/CRIT\s*DMG/i, /Daño\s*Cr[ií]tico/i, /Crit\s*DMG/i],
+  speed: [/Speed/i, /Velocidad/i, /\bSPD\b/i],
+  penetration: [/Penetration/i, /Penetraci[oó]n/i],
+  skillHaste: [/Haste/i, /Celeridad/i, /Skill\s*Haste/i],
+};
 
-const SLOTS: SlotName[] = [
-  "Yelmo",
-  "Armadura",
-  "Guantes",
-  "Botas",
-  "Collar",
-  "Pulsera",
-  "Anillo",
-  "Pendientes",
-];
-
-// Stats soportadas (incluye las de tus screenshots)
 const ALL_STATS = [
   "atkPct",
   "atkFlat",
+  "hpPct",
+  "hpFlat",
   "defPct",
   "defFlat",
-  "hpPct", // PS (%)
-  "hpFlat", // PS adicionales
-  "critRate", // Índice de golpe crítico
+  "critRate",
   "critDmg",
   "speed",
-  "elemDmg", // Daño elemental (agua/fuego/luz/oscuridad/viento)
-  "dmgBoost", // Aumento de daño
-  "defPen", // Penetración de defensa
-  "damageReductionPct", // Reducción de daño
-  "mpFlat", // PM adicionales
-  "mpCostReductionPct", // Reducción de consumo de PM
-  "mpRecoveryPct", // Aumento índice recuperación de PM (%)
+  "penetration",
+  "skillHaste",
 ] as const;
 
 type StatKey = typeof ALL_STATS[number];
 
-const LABELS: Record<StatKey, string> = {
-  atkPct: "Ataque (%)",
-  atkFlat: "Ataque adicional",
-  defPct: "Defensa (%)",
-  defFlat: "Defensa adicional",
-  hpPct: "PS (%)",
-  hpFlat: "PS adicionales",
-  critRate: "Índice de golpe crítico",
-  critDmg: "Daño crítico",
-  speed: "Velocidad (SPD)",
-  elemDmg: "Daño elemental",
-  dmgBoost: "Aumento de daño",
-  defPen: "Penetración de defensa",
-  damageReductionPct: "Reducción de daño",
-  mpFlat: "PM adicionales",
-  mpCostReductionPct: "Reducción de consumo de PM",
-  mpRecoveryPct: "Recuperación de PM (%)",
-};
-
-// Alias para detectar stats (ES/EN)
-const STAT_ALIASES: Record<StatKey, RegExp[]> = {
-  atkPct: [/\bATK\s*%\b/i, /\bATQ\s*%\b/i, /Ataque\s*%/i],
-  atkFlat: [/\bATK(?!\s*%)/i, /\bATQ(?!\s*%)/i, /Ataque\s+adicional/i],
-  defPct: [/\bDEF\s*%\b/i, /Defensa\s*%/i],
-  defFlat: [/\bDEF(?!\s*%)/i, /Defensa\s+adicional/i],
-  hpPct: [/\bHP\s*%\b/i, /PS\s*%/i, /Vida\s*%/i],
-  hpFlat: [/\bHP(?!\s*%)/i, /PS\s+adicionales/i, /Vida(?!\s*%)/i],
-  critRate: [/Índice\s+de\s+golpe\s+cr[ií]tico/i, /Prob\.?\s*Cr[ií]tica/i, /Crit\s*Rate/i],
-  critDmg: [/Daño\s*Cr[ií]tico/i, /CRIT\s*DMG/i],
-  speed: [/Velocidad/i, /\bSPD\b/i, /Speed/i],
-  elemDmg: [/Daño\s+elemental\s+de\s+(agua|fuego|luz|oscuridad|viento)/i, /Elemental\s*Damage/i],
-  dmgBoost: [/Aumento\s+de\s+dañ[oa]/i, /Damage\s*Increase/i],
-  defPen: [/Penetraci[oó]n\s*de\s*defensa/i, /Defense\s*Penetration/i],
-  damageReductionPct: [/Reducci[oó]n\s+de\s+dañ[oa]/i, /Damage\s*Reduction/i],
-  mpFlat: [/PM\s+adicionales/i, /MP\s+\+?\d+/i],
-  mpCostReductionPct: [/Reducci[oó]n\s+de\s+consumo\s+de\s+PM/i, /MP\s*Cost\s*Reduction/i],
-  mpRecoveryPct: [/recuperaci[oó]n\s+de\s+PM\s*\(\%\)|Aumento\s+de\s+índice\s+de\s+recuperaci[oó]n\s+de\s+PM\s*\(\%\)/i, /MP\s*Recovery\s*Rate/i],
-};
-
-// Benchmarks por pieza (ajusta a tu meta)
-const DEFAULT_BENCH: Record<StatKey, number> = {
+// Benchmarks (valor típico "bueno" por substat para normalizar). Ajustables por el usuario.
+const DEFAULT_BENCHMARKS: Record<StatKey, number> = {
   atkPct: 10,
   atkFlat: 50,
-  defPct: 10,
-  defFlat: 20,
   hpPct: 10,
   hpFlat: 200,
+  defPct: 10,
+  defFlat: 20,
   critRate: 10,
   critDmg: 20,
   speed: 5,
-  elemDmg: 10,
-  dmgBoost: 10,
-  defPen: 1000,
-  damageReductionPct: 10,
-  mpFlat: 50,
-  mpCostReductionPct: 10,
-  mpRecoveryPct: 10,
+  penetration: 8,
+  skillHaste: 8,
 };
 
-const ROLES = ["Tanque", "Luchador", "Mago", "Asesino", "Breaker", "Sanador"] as const;
-const ELEMENTOS = ["Luz", "Oscuridad", "Agua", "Fuego", "Viento"] as const;
-const ESCENARIOS = ["Historia", "Campo de batalla", "Jefe de gremio", "Taller de luz", "PvP", "Otros"] as const;
-const SCALINGS = ["ATK", "DEF", "PS"] as const; // cómo escala el daño del personaje
-
-type Rol = typeof ROLES[number];
-type Elemento = typeof ELEMENTOS[number];
-type Escenario = typeof ESCENARIOS[number];
-type Scaling = typeof SCALINGS[number];
-
-// Algunos perfiles de ejemplo (editables):
-const CHARACTER_PRESETS: Record<string, { element?: Elemento; defaultRol?: Rol; scaling: Scaling } > = {
-  "Seorin": { element: "Agua", defaultRol: "Breaker", scaling: "PS" },
-  "Cha Hae-In": { element: "Agua", defaultRol: "Luchador", scaling: "DEF" },
-  "Lennart Niermann": { element: "Viento", defaultRol: "Luchador", scaling: "DEF" },
+// Perfiles de pesos (ajústalos libremente)
+const PRESET_WEIGHTS: Record<string, Partial<Record<StatKey, number>>> = {
+  DPS: {
+    critRate: 1.0,
+    critDmg: 1.1,
+    atkPct: 0.9,
+    speed: 0.5,
+    penetration: 0.6,
+    skillHaste: 0.3,
+    hpPct: 0.2,
+    defPct: 0.2,
+  },
+  Tanque: {
+    hpPct: 1.0,
+    defPct: 0.9,
+    speed: 0.6,
+    atkPct: 0.2,
+    critRate: 0.2,
+    critDmg: 0.2,
+  },
+  Soporte: {
+    speed: 1.0,
+    skillHaste: 1.0,
+    hpPct: 0.6,
+    atkPct: 0.4,
+    defPct: 0.4,
+    penetration: 0.4,
+    critRate: 0.3,
+    critDmg: 0.3,
+  },
 };
 
-// ===================== Utilidades =====================
-function normalizeNumber(n: string): number | null {
-  if (!n) return null;
-  const clean = n.replace(/[^0-9,.-]/g, "").replace(/,(?=\d{1,2}\b)/g, ".");
+// ====== Utilidades ======
+function normalizeNumber(nLike: string): number | null {
+  if (!nLike) return null;
+  const clean = nLike.replace(/[^0-9,.-]/g, "").replace(/,(?=\d{1,2}\b)/g, ".");
   const num = parseFloat(clean);
   return isFinite(num) ? num : null;
 }
 
-function detectStatKey(line: string): StatKey | null {
-  for (const k of ALL_STATS) for (const r of STAT_ALIASES[k]) if (r.test(line)) return k;
-  if (/HP|PS/i.test(line) && /%/.test(line)) return "hpPct";
+function matchStatKey(line: string): StatKey | null {
+  for (const key of ALL_STATS) {
+    const regs = STAT_ALIASES[key];
+    for (const r of regs) if (r.test(line)) return key;
+  }
+  // Heurística: si contiene "%" y menciona HP/ATK/DEF, prioriza versión %
+  if (/HP/i.test(line) && /%/.test(line)) return "hpPct";
   if (/(ATK|ATQ|Ataque)/i.test(line) && /%/.test(line)) return "atkPct";
   if (/(DEF|Defensa)/i.test(line) && /%/.test(line)) return "defPct";
   return null;
 }
 
-function clamp(n:number,a:number,b:number){return Math.max(a,Math.min(b,n));}
-function toGrade(s:number):"S"|"A"|"B"|"C"|"D"{return s>=85?"S":s>=70?"A":s>=55?"B":s>=40?"C":"D";}
-
-// ===================== Modelos =====================
-export type Artifact = {
-  slot: SlotName;
-  imageUrl: string | null;
-  rawText: string;
-  busy: boolean;
-  progress: number;
-  stats: Partial<Record<StatKey, number>>;
-};
-
-function emptyArtifact(slot: SlotName): Artifact { return { slot, imageUrl: null, rawText: "", busy: false, progress: 0, stats: {} }; }
-
-// ===================== OCR =====================
-async function runOCROnUrl(url: string, onProgress?: (p:number)=>void): Promise<string> {
-  const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker("eng+spa", 1, { logger: (m:any)=>{ if(m.status==="recognizing text"&&typeof m.progress==="number") onProgress?.(Math.round(m.progress*100)); } });
-  try { const { data } = await worker.recognize(url); return data.text||""; } finally { await worker.terminate(); }
+function toGrade(score: number): "S" | "A" | "B" | "C" | "D" {
+  if (score >= 85) return "S";
+  if (score >= 70) return "A";
+  if (score >= 55) return "B";
+  if (score >= 40) return "C";
+  return "D";
 }
 
-function parseStatsFromText(text: string): Partial<Record<StatKey, number>> {
-  const out: Partial<Record<StatKey, number>> = {};
-  const lines = text.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-  for (const line of lines) {
-    const k = detectStatKey(line); if(!k) continue;
-    const m = line.match(/([-+]?\d{1,4}(?:[.,]\d{1,2})?)\s*%?/); const v = m? normalizeNumber(m[1]) : null; if(v==null) continue;
-    if (out[k]==null || v>(out[k] as number)) out[k]=v; // guarda el mayor por si hay ruido
-  }
-  return out;
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
 }
 
-// ===================== Pesos recomendados =====================
-function mergeWeights(...parts: Array<Partial<Record<StatKey, number>>>): Partial<Record<StatKey, number>> {
-  const r: Partial<Record<StatKey, number>> = {}; for (const p of parts) for (const k of Object.keys(p) as StatKey[]) r[k] = (r[k]||0) + (p[k]||0); return r;
-}
+// ====== Componente principal ======
+export default function ArtifactOCRApp() {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [rawText, setRawText] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [debug, setDebug] = useState(false);
 
-function scalingWeights(s: Scaling): Partial<Record<StatKey, number>> {
-  switch(s){
-    case "PS": return { hpPct:1.0, hpFlat:0.7, critRate:0.7, critDmg:0.8, dmgBoost:0.7, speed:0.5 };
-    case "DEF": return { defPct:1.0, defFlat:0.6, critRate:0.6, critDmg:0.7, defPen:0.6, dmgBoost:0.5 };
-    case "ATK": default: return { atkPct:1.0, atkFlat:0.6, critRate:1.0, critDmg:1.0, dmgBoost:0.7, speed:0.5 };
-  }
-}
+  // estadísticas detectadas (mapa de stat -> valor numérico)
+  const [stats, setStats] = useState<Partial<Record<StatKey, number>>>({});
 
-function roleWeights(rol: Rol): Partial<Record<StatKey, number>> {
-  switch(rol){
-    case "Tanque": return { hpPct:1.0, defPct:1.0, damageReductionPct:0.8, speed:0.6, defFlat:0.3 };
-    case "Luchador": return { atkPct:0.9, critRate:1.0, critDmg:1.0, speed:0.6, defPen:0.5, dmgBoost:0.6 };
-    case "Mago": return { elemDmg:1.0, skillHaste:0.0 /*placeholder*/, critRate:0.7, critDmg:0.8, atkPct:0.6, mpRecoveryPct:0.6, mpCostReductionPct:0.4 } as any;
-    case "Asesino": return { speed:1.0, critRate:1.0, critDmg:1.0, atkPct:0.8, defPen:0.6 };
-    case "Breaker": return { defPen:1.1, dmgBoost:0.8, atkPct:0.7, speed:0.5, critRate:0.6, critDmg:0.7 };
-    case "Sanador": return { mpRecoveryPct:1.0, hpPct:0.8, speed:0.8, mpCostReductionPct:0.6, dmgBoost:0.3 };
-  }
-}
+  // perfiles/ajustes
+  const [profileName, setProfileName] = useState<"DPS" | "Tanque" | "Soporte" | "Personalizado">("DPS");
+  const [weights, setWeights] = useState<Partial<Record<StatKey, number>>>({ ...PRESET_WEIGHTS["DPS"] });
+  const [benchmarks, setBenchmarks] = useState<Record<StatKey, number>>({ ...DEFAULT_BENCHMARKS });
 
-function elementWeights(elem: Elemento): Partial<Record<StatKey, number>> {
-  return { elemDmg: 0.4 }; // impulso genérico al daño elemental
-}
-
-function scenarioWeights(esc: Escenario): Partial<Record<StatKey, number>> {
-  switch(esc){
-    case "Jefe de gremio": return { critDmg:0.3, atkPct:0.2, defPen:0.3, dmgBoost:0.3 };
-    case "Campo de batalla": return { speed:0.4, hpPct:0.2, defPct:0.2, damageReductionPct:0.2 };
-    case "Taller de luz": return { elemDmg:0.4, speed:0.1 };
-    case "PvP": return { speed:0.4, critRate:0.2, damageReductionPct:0.3 };
-    case "Historia": default: return {};
-  }
-}
-
-function topStatsByWeight(weights: Partial<Record<StatKey, number>>, n=3): StatKey[] { return [...ALL_STATS].sort((a,b)=> (weights[b]||0)-(weights[a]||0)).slice(0,n); }
-
-function scoreValues(values: Partial<Record<StatKey, number>>, weights: Partial<Record<StatKey, number>>, bench: Record<StatKey, number>, pieces=1){
-  let sw=0, sws=0; for (const k of ALL_STATS){ const w=weights[k]||0; if(w<=0) continue; const v=values[k]||0; const b=(bench[k]||0)*pieces; if(b<=0) continue; const norm=clamp(v/b,0,1.25); sw += norm*w; sws += w; } const s = sws>0 ? clamp((sw/sws)*100, 0, 100) : 0; return Math.round(s);
-}
-
-// ===================== Componente principal =====================
-export default function ArtifactBuildsOCR(){
-  // Build actual
-  const [character, setCharacter] = useState<string>("");
-  const [elemento, setElemento] = useState<Elemento>("Agua");
-  const [rol, setRol] = useState<Rol>("Luchador");
-  const [escenario, setEscenario] = useState<Escenario>("Historia");
-  const [scaling, setScaling] = useState<Scaling>("ATK");
-
-  // Pesos y benchmarks
-  const [weights, setWeights] = useState<Partial<Record<StatKey, number>>>(mergeWeights(roleWeights("Luchador"), scalingWeights("ATK")));
-  const [bench, setBench] = useState<Record<StatKey, number>>({ ...DEFAULT_BENCH });
-
-  // Piezas
-  const [arts, setArts] = useState<Artifact[]>(SLOTS.map(s=>emptyArtifact(s)));
-  const [debug, setDebug] = useState<boolean[]>(Array(SLOTS.length).fill(false));
-
-  function applyCharacterPreset(name: string){
-    setCharacter(name);
-    const p = CHARACTER_PRESETS[name];
-    if(!p) return; // personaje libre
-    if(p.element) setElemento(p.element);
-    if(p.defaultRol) setRol(p.defaultRol);
-    setScaling(p.scaling);
+  // Sync preset -> weights
+  function applyPreset(name: "DPS" | "Tanque" | "Soporte" | "Personalizado") {
+    setProfileName(name);
+    if (name === "Personalizado") return;
+    setWeights({ ...PRESET_WEIGHTS[name] });
   }
 
-  function applyBuild(){ setWeights( mergeWeights( scalingWeights(scaling), roleWeights(rol), elementWeights(elemento), scenarioWeights(escenario) ) ); }
+  function handleFile(file: File) {
+    const url = URL.createObjectURL(file);
+    setImageUrl(url);
+    runOCR(url);
+  }
 
-  function updateArt(i:number, patch: Partial<Artifact>){ setArts(arr=> arr.map((a,idx)=> idx===i?{...a,...patch}:a)); }
+  async function runOCR(url: string) {
+    setBusy(true);
+    setProgress(0);
+    setRawText("");
+    try {
+      const result = await Tesseract.recognize(url, "eng+spa", {
+        logger: (m) => {
+          if (m.status === "recognizing text" && m.progress) setProgress(Math.round(m.progress * 100));
+        },
+      });
+      const text = result.data?.text || "";
+      setRawText(text);
+      const parsed = parseStatsFromText(text);
+      setStats(parsed);
+    } catch (e) {
+      console.error(e);
+      alert("Error al ejecutar OCR. Intenta con otra imagen o recórtala mejor.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-  function onFile(i:number, file: File){ const url=URL.createObjectURL(file); updateArt(i,{imageUrl:url,busy:true,progress:0,rawText:""}); runOCROnUrl(url,(p)=>updateArt(i,{progress:p})).then(text=>{ const parsed = parseStatsFromText(text); updateArt(i,{rawText:text,stats:parsed}); }).catch(e=>{ console.error(e); alert("Error al ejecutar OCR. Intenta con otra imagen o recórtala mejor."); }).finally(()=> updateArt(i,{busy:false})); }
+  function parseStatsFromText(text: string): Partial<Record<StatKey, number>> {
+    const out: Partial<Record<StatKey, number>> = {};
+    const lines = text
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter(Boolean);
 
-  // Sumatoria del set
-  const aggregate = useMemo(()=>{ const sum: Partial<Record<StatKey, number>> = {}; for(const k of ALL_STATS) sum[k]=0; for(const a of arts) for(const k of ALL_STATS) sum[k]! += a.stats[k]||0; return sum; }, [arts]);
+    for (const line of lines) {
+      const key = matchStatKey(line);
+      if (!key) continue;
+      // Busca número (con % opcional)
+      const numMatch = line.match(/([-+]?\d{1,3}(?:[.,]\d{1,2})?)\s*%?/);
+      const value = numMatch ? normalizeNumber(numMatch[1]) : null;
+      if (value == null) continue;
 
-  const setScore = useMemo(()=> scoreValues(aggregate, weights, bench, 8), [aggregate, weights, bench]);
-  const setGrade = useMemo(()=> toGrade(setScore), [setScore]);
-  const top3 = useMemo(()=> topStatsByWeight(weights,3), [weights]);
+      // Si la línea tenía %, asume porcentaje; si el key es flat (ej. atkFlat), deja tal cual
+      const isPct = /%/.test(line) || key.endsWith("Pct");
+      const final = value; // Guardamos el número puro; la unidad se deduce por el key
 
+      // Mantén el mayor valor visto para la misma stat (por si hay ruido)
+      if (out[key] == null || final > (out[key] as number)) {
+        out[key] = final;
+      }
+    }
+
+    return out;
+  }
+
+  // Cálculo de puntuación
+  const { score, grade, tips } = useMemo(() => {
+    // suma ponderada de (valor/benchmark)
+    let sumWeighted = 0;
+    let sumWeights = 0;
+
+    for (const key of ALL_STATS) {
+      const w = weights[key] ?? 0;
+      if (w <= 0) continue;
+      const v = stats[key];
+      const bench = benchmarks[key];
+      if (!v || !bench || bench <= 0) continue;
+      const norm = clamp(v / bench, 0, 1.25); // permitimos algo >100% por rolls muy altos
+      sumWeighted += norm * w;
+      sumWeights += w;
+    }
+
+    const s = sumWeights > 0 ? clamp((sumWeighted / sumWeights) * 100, 0, 100) : 0;
+    const g = toGrade(s);
+
+    // Sugerencias simples (ejemplos)
+    const t: string[] = [];
+    if ((weights.critRate ?? 0) > 0.6 && (stats.critRate ?? 0) < (benchmarks.critRate * 0.6)) {
+      t.push("Tu Prob. Crítica es baja para el perfil seleccionado — busca >= ~60% del benchmark.");
+    }
+    if ((weights.critDmg ?? 0) > 0.6 && (stats.critDmg ?? 0) < (benchmarks.critDmg * 0.6)) {
+      t.push("Tu Daño Crítico podría subir — intenta llegar al benchmark.");
+    }
+    if ((weights.speed ?? 0) > 0.6 && (stats.speed ?? 0) < (benchmarks.speed * 0.6)) {
+      t.push("Te falta Velocidad para el rol — considera piezas con más SPD.");
+    }
+    if ((weights.skillHaste ?? 0) > 0.6 && (stats.skillHaste ?? 0) < (benchmarks.skillHaste * 0.6)) {
+      t.push("La Celeridad es clave en soporte — busca rolls más altos.");
+    }
+
+    return { score: Math.round(s), grade: g, tips: t };
+  }, [stats, weights, benchmarks]);
+
+  // ====== Render ======
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-6">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Builds + OCR — 8 piezas con escalado por personaje</h1>
-          <p className="text-slate-300 mt-2">Ejemplo: Seorin escala con PS; Cha Hae-In y Lennart con DEF. Ajusta build y sube tus piezas.</p>
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Evaluador de Artefactos — Solo Leveling (OCR)</h1>
+          <p className="text-slate-300 mt-2">Sube una imagen del artefacto para extraer stats y evaluarlo según tu objetivo (DPS, Tanque, Soporte o personalizado).</p>
         </header>
 
-        {/* Configuración del build */}
-        <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
-            <div className="lg:col-span-2">
-              <label className="text-sm text-slate-400">Personaje</label>
-              <div className="flex gap-2 mt-1">
-                <select onChange={(e)=>applyCharacterPreset(e.target.value)} className="w-1/2 bg-transparent border border-slate-700 rounded-lg px-3 py-2">
-                  <option className="bg-slate-900" value="">(Personalizado)</option>
-                  {Object.keys(CHARACTER_PRESETS).map(n=> (<option key={n} value={n} className="bg-slate-900">{n}</option>))}
-                </select>
-                <input value={character} onChange={(e)=>setCharacter(e.target.value)} placeholder="o escribe el nombre" className="flex-1 bg-transparent border border-slate-700 rounded-lg px-3 py-2"/>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm text-slate-400">Elemento</label>
-              <select value={elemento} onChange={(e)=>setElemento(e.target.value as Elemento)} className="mt-1 w-full bg-transparent border border-slate-700 rounded-lg px-3 py-2">{[...ELEMENTOS].map(x=> <option key={x} value={x} className="bg-slate-900">{x}</option>)}</select>
-            </div>
-            <div>
-              <label className="text-sm text-slate-400">Rol</label>
-              <select value={rol} onChange={(e)=>setRol(e.target.value as Rol)} className="mt-1 w-full bg-transparent border border-slate-700 rounded-lg px-3 py-2">{[...ROLES].map(x=> <option key={x} value={x} className="bg-slate-900">{x}</option>)}</select>
-            </div>
-            <div>
-              <label className="text-sm text-slate-400">Escenario</label>
-              <select value={escenario} onChange={(e)=>setEscenario(e.target.value as Escenario)} className="mt-1 w-full bg-transparent border border-slate-700 rounded-lg px-3 py-2">{[...ESCENARIOS].map(x=> <option key={x} value={x} className="bg-slate-900">{x}</option>)}</select>
-            </div>
-            <div>
-              <label className="text-sm text-slate-400">Escala con…</label>
-              <select value={scaling} onChange={(e)=>setScaling(e.target.value as Scaling)} className="mt-1 w-full bg-transparent border border-slate-700 rounded-lg px-3 py-2">{[...SCALINGS].map(x=> <option key={x} value={x} className="bg-slate-900">{x}</option>)}</select>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3 items-center">
-            <button onClick={applyBuild} className="px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-400">Aplicar recomendaciones</button>
-            <div className="text-sm text-slate-400">Top stats sugeridos: <span className="text-slate-200 font-medium ml-1">{top3.map(k=>LABELS[k]).join(', ')}</span></div>
-          </div>
-        </section>
-
-        {/* Grid de piezas */}
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {arts.map((a,i)=> (
-            <PieceCard key={i} idx={i} art={a} bench={bench} weights={weights}
-              debug={debug[i]}
-              onDebug={(v)=> setDebug(d=> d.map((x,j)=> j===i? v : x))}
-              onPatch={(patch)=> updateArt(i, patch)}
-              onFile={(f)=> onFile(i,f)}
-            />
-          ))}
-        </section>
-
-        {/* Resultado del set */}
-        <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 lg:col-span-2">
-            <h2 className="text-xl font-semibold mb-3">Resultado del conjunto</h2>
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center">
-              <div className="text-6xl font-black mb-1">{setScore}</div>
-              <div className="text-sm uppercase tracking-wide text-slate-400">Puntuación total</div>
-              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-700"><span className="text-lg font-bold">Rango {setGrade}</span></div>
-            </div>
-            <div className="mt-5">
-              <h3 className="font-semibold mb-2">Stats sumadas (8 piezas)</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {ALL_STATS.map(k=> (
-                  <div key={k} className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-400">{LABELS[k]}</div>
-                    <div className="text-lg font-semibold">{fmtStat(k, aggregate[k]||0)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Benchmarks por pieza */}
+        {/* Uploader */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-            <h2 className="text-xl font-semibold mb-3">Benchmarks por pieza</h2>
-            <p className="text-xs text-slate-400 mb-3">Se multiplican ×8 para evaluar el set.</p>
-            <div className="grid grid-cols-2 gap-3">
-              {ALL_STATS.map(k=> (
+            <h2 className="text-xl font-semibold mb-3">1) Sube tu imagen</h2>
+            <label
+              htmlFor="file"
+              className="block w-full border-2 border-dashed rounded-xl p-6 text-center cursor-pointer border-slate-700 hover:border-slate-500 transition"
+            >
+              <input
+                id="file"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                }}
+              />
+              <div className="space-y-2">
+                <div className="text-lg">Arrastra y suelta o haz click para elegir</div>
+                <div className="text-sm text-slate-400">PNG / JPG — Ideal: recortar solo el panel del artefacto</div>
+              </div>
+            </label>
+
+            {imageUrl && (
+              <div className="mt-4">
+                <img src={imageUrl} alt="preview" className="rounded-xl max-h-[360px] object-contain w-full bg-black/20" />
+              </div>
+            )}
+
+            {busy && (
+              <div className="mt-4">
+                <div className="text-sm text-slate-300 mb-2">Reconociendo texto… {progress}%</div>
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-300" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex items-center gap-3">
+              <input id="debug" type="checkbox" className="accent-slate-300" checked={debug} onChange={(e) => setDebug(e.target.checked)} />
+              <label htmlFor="debug" className="text-sm text-slate-300">Mostrar texto crudo del OCR (debug)</label>
+            </div>
+
+            {debug && (
+              <pre className="mt-3 max-h-56 overflow-auto text-xs bg-slate-950/60 border border-slate-800 rounded-xl p-3 whitespace-pre-wrap">{rawText || "(sin texto aún)"}</pre>
+            )}
+          </div>
+
+          {/* Stats detectadas y edición */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+            <h2 className="text-xl font-semibold mb-3">2) Revisa y corrige las estadísticas</h2>
+            <p className="text-sm text-slate-400 mb-4">El OCR puede fallar; edita manualmente para una evaluación precisa.</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {ALL_STATS.map((k) => (
                 <div key={k} className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">{LABELS[k]}</div>
-                  <input type="number" step={0.1} value={bench[k]} onChange={(e)=> setBench(b=> ({...b, [k]: Number(e.target.value||0)}))}
-                    className="mt-1 w-full bg-transparent outline-none border border-slate-700 focus:border-slate-400 rounded-lg px-2 py-1"/>
+                  <div className="text-xs uppercase tracking-wide text-slate-400">{labelFor(k)}</div>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="0"
+                    value={stats[k] ?? ""}
+                    onChange={(e) => setStats((s) => ({ ...s, [k]: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                    className="mt-1 w-full bg-transparent outline-none border border-slate-700 focus:border-slate-400 rounded-lg px-2 py-1"
+                  />
+                  <div className="text-[10px] text-slate-500 mt-1">{k.endsWith("Pct") || k === "critRate" || k === "critDmg" ? "%" : "plano"}</div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* Perfiles y pesos */}
+        <section className="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 xl:col-span-2">
+            <h2 className="text-xl font-semibold mb-3">3) Objetivo y pesos</h2>
+
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              {(["DPS", "Tanque", "Soporte", "Personalizado"] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => applyPreset(n)}
+                  className={`px-3 py-1.5 rounded-lg border ${profileName === n ? "bg-slate-200 text-slate-900 border-slate-200" : "border-slate-700 hover:border-slate-500"}`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {ALL_STATS.map((k) => (
+                <div key={k} className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-slate-300">{labelFor(k)}</div>
+                    <div className="text-xs text-slate-500">Peso: {weights[k] ?? 0}</div>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1.5}
+                    step={0.1}
+                    value={weights[k] ?? 0}
+                    onChange={(e) => setWeights((w) => ({ ...w, [k]: Number(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Resultado */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+            <h2 className="text-xl font-semibold mb-3">4) Resultado</h2>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center">
+              <div className="text-6xl font-black tracking-tight mb-2">{score}</div>
+              <div className="text-sm uppercase tracking-wide text-slate-400">Puntuación</div>
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-700">
+                <span className="text-lg font-bold">Rango {grade}</span>
+              </div>
+              {tips.length > 0 && (
+                <ul className="text-left text-sm text-slate-300 mt-4 list-disc list-inside space-y-1">
+                  {tips.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Benchmarks */}
+            <div className="mt-5">
+              <h3 className="font-semibold mb-2">Benchmarks (normalización)</h3>
+              <p className="text-xs text-slate-400 mb-3">Se usan para convertir cada stat en 0–100% antes de aplicar el peso. Ajusta a tu juego/parche/meta.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {ALL_STATS.map((k) => (
+                  <div key={k} className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
+                    <div className="text-xs uppercase tracking-wide text-slate-400">{labelFor(k)}</div>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={benchmarks[k]}
+                      onChange={(e) => setBenchmarks((b) => ({ ...b, [k]: Number(e.target.value || 0) }))}
+                      className="mt-1 w-full bg-transparent outline-none border border-slate-700 focus:border-slate-400 rounded-lg px-2 py-1"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Acciones extra */}
         <section className="mt-8">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-            <h2 className="text-xl font-semibold mb-3">Consejos y siguientes pasos</h2>
+            <h2 className="text-xl font-semibold mb-3">Consejos de uso</h2>
             <ul className="list-disc list-inside text-slate-300 space-y-1 text-sm">
-              <li>Para Seorin, prioriza PS%/PS plano + Aumento de daño + CRIT; los pesos ya reflejan el escalado por PS.</li>
-              <li>Para escalado por DEF (Hae-In/Lennart), sube DEF%/DEF plano + CRIT y Penetración de defensa.</li>
-              <li>Si usas magos o sanadores, mejora PM (recuperación/consumo) y velocidad.</li>
+              <li>Recorta la imagen al panel del artefacto para mejorar el OCR.</li>
+              <li>Si un valor salió mal, corrígelo en los campos; la puntuación se actualiza al instante.</li>
+              <li>Ajusta los <em>benchmarks</em> y los pesos según tu personaje y contenido (historia, jefes, PvP, etc.).</li>
+              <li>Para resultados pro: guarda tus perfiles por personaje (se puede extender con localStorage).</li>
             </ul>
           </div>
         </section>
@@ -374,53 +422,29 @@ export default function ArtifactBuildsOCR(){
   );
 }
 
-// ===================== Subcomponente de pieza =====================
-function PieceCard({ idx, art, bench, weights, debug, onDebug, onPatch, onFile }:{
-  idx: number; art: Artifact; bench: Record<StatKey, number>; weights: Partial<Record<StatKey, number>>; debug: boolean; onDebug: (v:boolean)=>void; onPatch: (p: Partial<Artifact>)=>void; onFile: (f: File)=>void; }){
-  const pieceScore = useMemo(()=> scoreValues(art.stats, weights, bench, 1), [art.stats, weights, bench]);
-  const grade = useMemo(()=> toGrade(pieceScore), [pieceScore]);
-  const isGood = pieceScore >= 70;
-
-  return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-semibold">{idx+1}) {art.slot}</h2>
-        <div className={`text-xs px-2 py-1 rounded border ${isGood? 'border-emerald-400 text-emerald-400':'border-slate-500 text-slate-300'}`}>{isGood? 'BUENO para el build':'Regular'}</div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Uploader */}
-        <div>
-          <label className="text-sm text-slate-400">Imagen del artefacto</label>
-          <label htmlFor={`file-${idx}`} className="mt-1 block w-full border-2 border-dashed rounded-xl p-6 text-center cursor-pointer border-slate-700 hover:border-slate-500 transition">
-            <input id={`file-${idx}`} type="file" accept="image/*" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onFile(f); }} />
-            <div className="space-y-2"><div className="text-lg">Arrastra y suelta o haz click</div><div className="text-sm text-slate-400">PNG/JPG — Ideal: recortar solo el panel</div></div>
-          </label>
-          {art.imageUrl && (<div className="mt-4"><img src={art.imageUrl} alt={`preview-${idx}`} className="rounded-xl max-h-[320px] object-contain w-full bg-black/20" /></div>)}
-          {art.busy && (<div className="mt-4"><div className="text-sm text-slate-300 mb-2">OCR… {art.progress}%</div><div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-slate-300" style={{ width: `${art.progress}%` }} /></div></div>)}
-          <div className="mt-4 flex items-center gap-3"><input id={`debug-${idx}`} type="checkbox" className="accent-slate-300" checked={debug} onChange={(e)=>onDebug(e.target.checked)} /><label htmlFor={`debug-${idx}`} className="text-sm text-slate-300">Mostrar texto crudo del OCR</label></div>
-          {debug && (<pre className="mt-3 max-h-40 overflow-auto text-xs bg-slate-950/60 border border-slate-800 rounded-xl p-3 whitespace-pre-wrap">{art.rawText || "(sin texto aún)"}</pre>)}
-        </div>
-
-        {/* Stats detectadas / edición */}
-        <div>
-          <div className="flex items-center justify-between mb-2"><h3 className="text-sm text-slate-400">Estadísticas (edita si es necesario)</h3><div className="text-xs text-slate-400">Puntuación: <span className={`font-semibold ${isGood? 'text-emerald-400':'text-slate-200'}`}>{pieceScore}</span> • Rango {grade}</div></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {ALL_STATS.map(k=> (
-              <div key={k} className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
-                <div className="text-xs uppercase tracking-wide text-slate-400">{LABELS[k]}</div>
-                <input type="number" step={0.1} placeholder="0" value={art.stats[k] ?? ''} onChange={(e)=> onPatch({ stats: { ...art.stats, [k]: e.target.value===''? undefined : Number(e.target.value) } })} className="mt-1 w-full bg-transparent outline-none border border-slate-700 focus:border-slate-400 rounded-lg px-2 py-1" />
-                <div className="text-[10px] text-slate-500 mt-1">{(k.endsWith('Pct') || k==='critRate' || k==='critDmg' || k==='elemDmg' || k==='dmgBoost' || k==='mpCostReductionPct' || k==='mpRecoveryPct' || k==='damageReductionPct') ? '%' : 'plano'}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 text-sm text-slate-300"><span className="text-slate-400">Prioriza en esta pieza:</span> {topStatsByWeight(weights).map(k=> LABELS[k]).join(', ')}</div>
-    </div>
-  );
+function labelFor(k: StatKey): string {
+  switch (k) {
+    case "atkPct":
+      return "ATK% / ATQ%";
+    case "atkFlat":
+      return "ATK Plano";
+    case "hpPct":
+      return "HP% / Vida%";
+    case "hpFlat":
+      return "HP Plano";
+    case "defPct":
+      return "DEF% / Defensa%";
+    case "defFlat":
+      return "DEF Plano";
+    case "critRate":
+      return "Prob. Crítica";
+    case "critDmg":
+      return "Daño Crítico";
+    case "speed":
+      return "Velocidad (SPD)";
+    case "penetration":
+      return "Penetración";
+    case "skillHaste":
+      return "Celeridad (Haste)";
+  }
 }
-
-// ===================== Helpers =====================
-function fmtStat(k: StatKey, v: number){ if (k.endsWith('Pct') || k==='critRate' || k==='critDmg' || k==='elemDmg' || k==='dmgBoost' || k==='mpCostReductionPct' || k==='mpRecoveryPct' || k==='damageReductionPct') return `${v.toFixed(2)}%`; return `${Math.round(v)}`; }
