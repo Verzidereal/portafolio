@@ -265,14 +265,6 @@ export default function ProjectsBrowser() {
                 </a>
               )}
               {p.repo && (
-                <a
-                  href={p.repo}
-                  target="_blank"
-                  rel="noopener"
-                  className="px-3 py-2 rounded-lg border border-white/10 text-sm hover:border-white/20 transition"
-                >
-                  Código
-                </a>
               )}
             </div>
           </article>
